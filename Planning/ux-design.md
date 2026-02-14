@@ -1,6 +1,6 @@
 # SDLC Assist — UX Design Reference
 
-> **Design File:** `Planning/sdlc-assist-design.pen`
+> **Design File:** `Planning/sdlc-assist.pen`
 > **Reference Kit:** `Planning/pencil-shadcn.pen` (shadcn/ui style)
 > **Last Updated:** 2026-02-14
 
