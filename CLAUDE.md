@@ -127,13 +127,17 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - Phase 1 core: auth, project CRUD, requirement sections API + UI
 - UI overhaul: shadcn/ui-inspired design with Inter font, Lucide icons, dark mode (ThemeService)
 - Railway deployment: both services deployed, nginx reverse proxy working, backend connected to Supabase DB
+- Admin user management: create, delete, reset password (ADMIN role only, `/admin/users` route)
 
 ### In Progress
 - Railway deployment is live and functional — login, projects, and sections all working
 - Next: Phase 2 planning (AI features with Anthropic Claude integration)
 
+### TODO / Deferred
+- **Email invite on user creation**: Backend has `EmailService` with `@Async` + `spring-boot-starter-mail` + Gmail SMTP config. Works locally but **Railway blocks outbound SMTP (ports 587 and 465)**. To enable in production, switch to an HTTP-based email API (e.g. Resend) instead of SMTP. The frontend form, backend plumbing, and `email` column on `users` table are already in place — just need to swap the transport.
+
 ### Railway Env Vars (current)
-- **Backend**: `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `ALLOWED_ORIGINS` (no `SPRING_PROFILES_ACTIVE` — uses default profile)
+- **Backend**: `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `ALLOWED_ORIGINS`, `MAIL_USERNAME`, `MAIL_PASSWORD` (no `SPRING_PROFILES_ACTIVE` — uses default profile)
 - **Frontend**: `API_URL=http://sdlc-assist.railway.internal:8080` (no `/api` suffix — nginx passes the full request path)
 
 ### Known Issues & Gotchas
@@ -145,3 +149,4 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - **nginx + Railway IPv6 DNS**: Railway's internal DNS resolver is IPv6 (`fd12::10`). Must wrap in brackets `[fd12::10]` for nginx `resolver` directive.
 - **nginx variable proxy_pass**: When using a variable in `proxy_pass`, nginx passes the full original URI (no prefix stripping). Set `API_URL` to the backend root (no `/api` suffix) to avoid path doubling.
 - **GlobalExceptionHandler**: Was silently swallowing all unhandled exceptions. Added `log.error()` to the catch-all handler.
+- **Railway blocks outbound SMTP**: Both ports 587 (STARTTLS) and 465 (SMTPS) are blocked. Must use an HTTP-based email provider (e.g. Resend) for sending email from Railway.
