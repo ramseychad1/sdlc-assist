@@ -18,16 +18,19 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
 
+    @Transactional(readOnly = true)
     public List<Project> findAll() {
         return projectRepository.findAllByOrderByUpdatedAtDesc();
     }
 
+    @Transactional(readOnly = true)
     public List<Project> findByOwner(UUID ownerId) {
         return projectRepository.findByOwnerIdOrderByUpdatedAtDesc(ownerId);
     }
 
+    @Transactional(readOnly = true)
     public Project findById(UUID id) {
-        return projectRepository.findById(id)
+        return projectRepository.findByIdWithOwner(id)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found: " + id));
     }
 
