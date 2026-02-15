@@ -1,0 +1,422 @@
+/* SDLC Assist — Global Styles
+ * Themed to match the Pencil UX designs (shadcn-inspired tokens)
+ * See: 1.Planning/ux-design.md for design tokens
+ */
+
+@use '@angular/material' as mat;
+
+/* ===== Design Tokens ===== */
+:root {
+  /* Background */
+  --background: #fafafa;
+  --foreground: #0a0a0a;
+
+  /* Card */
+  --card: #fafafa;
+  --card-foreground: #0a0a0a;
+
+  /* Primary */
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+
+  /* Secondary */
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+
+  /* Muted */
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+
+  /* Destructive */
+  --destructive: #e7000b;
+
+  /* Border / Input */
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #a3a3a3;
+
+  /* Accent */
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+
+  /* Sidebar */
+  --sidebar: #fafafa;
+  --sidebar-accent: #f4f4f4;
+  --sidebar-foreground: #09090b;
+  --sidebar-border: #e4e4e7;
+  --sidebar-primary: #18181b;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-ring: #71717a;
+
+  /* Popover */
+  --popover: #fafafa;
+  --popover-foreground: #0a0a0a;
+
+  /* Pure colors */
+  --white: #ffffff;
+  --black: #000000;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-full: 9999px;
+
+  /* Font */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ===== Dark Theme ===== */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --primary: #e5e5e5;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --destructive: #ff6669;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #737373;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --sidebar: #18181b;
+  --sidebar-accent: #2a2a30;
+  --sidebar-foreground: #fafafa;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-primary: #1447e6;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-ring: #71717a;
+  --popover: #171717;
+  --popover-foreground: #fafafa;
+}
+
+/* ===== Base Reset ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  line-height: 1.43;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Typography ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+h1 { font-size: 2rem; line-height: 1.2; }
+h2 { font-size: 1.5rem; line-height: 1.3; }
+h3 { font-size: 1.25rem; line-height: 1.35; }
+h4 { font-size: 1.125rem; line-height: 1.4; }
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* ===== Global Button Classes ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--accent);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--accent);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--foreground);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--accent);
+}
+
+.btn-destructive {
+  background-color: var(--destructive);
+  color: var(--white);
+}
+
+.btn-destructive:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-icon {
+  padding: 8px;
+  width: 36px;
+  height: 36px;
+}
+
+/* ===== Global Form Classes ===== */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--foreground);
+  font-size: 14px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--foreground);
+  background-color: var(--background);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(163, 163, 163, 0.2);
+}
+
+.input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--foreground);
+  background-color: var(--background);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.textarea:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(163, 163, 163, 0.2);
+}
+
+.textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* ===== Global Card Class ===== */
+.card {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 1.75px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== Global Badge Classes ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-draft {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.badge-active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.dark .badge-active {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.badge-completed {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.dark .badge-completed {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.badge-archived {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+
+/* ===== Material Overrides (retained components only) ===== */
+
+/* Dialog */
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  background-color: var(--card) !important;
+  color: var(--card-foreground) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.mat-mdc-dialog-title {
+  color: var(--foreground) !important;
+  font-family: var(--font-family) !important;
+}
+
+/* Table */
+.mat-mdc-table {
+  background-color: var(--card) !important;
+  font-family: var(--font-family) !important;
+}
+
+.mat-mdc-header-cell {
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  border-bottom-color: var(--border) !important;
+}
+
+.mat-mdc-cell {
+  color: var(--foreground) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+.mat-mdc-row:hover {
+  background-color: var(--muted) !important;
+}
+
+/* Menu */
+.mat-mdc-menu-panel {
+  background-color: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.mat-mdc-menu-item {
+  color: var(--popover-foreground) !important;
+  font-family: var(--font-family) !important;
+}
+
+.mat-mdc-menu-item:hover {
+  background-color: var(--accent) !important;
+}
+
+/* Snackbar */
+.mat-mdc-snack-bar-container .mdc-snackbar__surface {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* ===== Utility Classes ===== */
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.text-destructive {
+  color: var(--destructive);
+}
+
+.bg-muted {
+  background-color: var(--muted);
+}
+
+.border-bottom {
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
