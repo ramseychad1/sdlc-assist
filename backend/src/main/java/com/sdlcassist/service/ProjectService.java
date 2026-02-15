@@ -54,6 +54,13 @@ public class ProjectService {
     }
 
     @Transactional
+    public Project savePrd(UUID id, String content) {
+        Project project = findById(id);
+        project.setPrdContent(content);
+        return projectRepository.save(project);
+    }
+
+    @Transactional
     public void delete(UUID id) {
         Project project = findById(id);
         projectRepository.delete(project);

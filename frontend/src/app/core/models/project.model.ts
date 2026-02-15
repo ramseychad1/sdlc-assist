@@ -2,6 +2,7 @@ export interface Project {
     id: string;
     name: string;
     description: string | null;
+    prdContent: string | null;
     status: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
     ownerName: string | null;
     ownerId: string | null;

@@ -28,6 +28,10 @@ export class ProjectService {
         return this.http.put<Project>(`${this.baseUrl}/${id}`, request, { withCredentials: true });
     }
 
+    savePrd(id: string, content: string): Observable<Project> {
+        return this.http.put<Project>(`${this.baseUrl}/${id}/prd`, { content }, { withCredentials: true });
+    }
+
     delete(id: string): Observable<void> {
         return this.http.delete<void>(`${this.baseUrl}/${id}`, { withCredentials: true });
     }

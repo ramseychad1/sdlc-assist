@@ -49,7 +49,7 @@ app:
   anthropic:
     api-key: ${ANTHROPIC_API_KEY:}
     model: claude-sonnet-4-5-20250929
-    max-tokens: 4096
+    max-tokens: 16000
   prompts:
     directory: ${PROMPTS_DIRECTORY:}
 

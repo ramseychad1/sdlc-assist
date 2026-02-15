@@ -144,6 +144,14 @@ public class AiService {
                                     emitter.send(SseEmitter.event().name("delta").data(text));
                                 }
                             }
+                        } else if ("message_delta".equals(type)) {
+                            Map<String, Object> delta = (Map<String, Object>) event.get("delta");
+                            if (delta != null) {
+                                String stopReason = (String) delta.get("stop_reason");
+                                if (stopReason != null) {
+                                    log.info("Stream stop_reason: {}", stopReason);
+                                }
+                            }
                         } else if ("message_stop".equals(type)) {
                             emitter.send(SseEmitter.event().name("done").data(""));
                             emitter.complete();

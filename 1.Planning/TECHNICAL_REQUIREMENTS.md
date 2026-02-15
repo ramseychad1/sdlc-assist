@@ -112,6 +112,7 @@ sdlc-assist/
 | id          | uuid (PK)   | gen_random_uuid()        |
 | name        | text         | NOT NULL                 |
 | description | text         | nullable                 |
+| prd_content | text         | nullable, AI-generated PRD |
 | created_at  | timestamptz  | DEFAULT now()            |
 | updated_at  | timestamptz  | DEFAULT now()            |
 
@@ -142,6 +143,7 @@ sdlc-assist/
 | POST   | `/api/projects/{id}/sections` | Create a requirement section |
 | PUT    | `/api/projects/{id}/sections/{sectionId}` | Update a section |
 | DELETE | `/api/projects/{id}/sections/{sectionId}` | Delete a section |
+| PUT    | `/api/projects/{id}/prd` | Save PRD content on project |
 | POST   | `/api/ai/generate` | AI assist - generate/expand/refine content (SSE streaming) |
 
 ### AI Endpoint Details (`POST /api/ai/generate`)

@@ -27,10 +27,10 @@ Monorepo with three top-level components:
 - **`supabase/`** — SQL migrations for Supabase-hosted PostgreSQL.
 
 ### Backend Structure (`com.sdlcassist`)
-- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`), `SectionController` (`/api/projects/{id}/sections`)
-- `service/` — Business logic: `UserService` (implements `UserDetailsService`), `ProjectService`, `SectionService`
-- `model/` — JPA entities: `User` (roles: ADMIN, PRODUCT_MANAGER, VIEWER), `Project` (statuses: DRAFT, ACTIVE, COMPLETED, ARCHIVED), `RequirementSection`
-- `dto/` — Request/response DTOs with Lombok builders
+- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`, `PUT /api/projects/{id}/prd`), `SectionController` (`/api/projects/{id}/sections`)
+- `service/` — Business logic: `UserService` (implements `UserDetailsService`), `ProjectService` (includes `savePrd()`), `SectionService`
+- `model/` — JPA entities: `User` (roles: ADMIN, PRODUCT_MANAGER, VIEWER), `Project` (statuses: DRAFT, ACTIVE, COMPLETED, ARCHIVED; includes `prdContent`), `RequirementSection`
+- `dto/` — Request/response DTOs with Lombok builders (includes `PrdRequest`)
 - `config/` — `SecurityConfig` (endpoint security rules), `CorsConfig` (allows localhost:4200), `DataSeeder` (seeds initial data)
 
 ### Frontend Structure (`src/app/`)
@@ -43,7 +43,7 @@ Monorepo with three top-level components:
 - Routes: `/login`, `/dashboard`, `/projects/:id/planning`
 
 ### Database
-Three tables: `users`, `projects`, `requirement_sections`. UUIDs as primary keys. Sections have 5 fixed types per project (project_description, functional_requirements, non_functional_requirements, user_stories, acceptance_criteria) auto-created on first access.
+Three tables: `users`, `projects`, `requirement_sections`. UUIDs as primary keys. The `projects` table has a `prd_content` TEXT column for storing AI-generated PRDs. Sections table still exists but is no longer rendered in the UI (PRD pivot). Sections have 5 fixed types per project auto-created on first access.
 
 ## Common Commands
 
@@ -128,10 +128,12 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - UI overhaul: shadcn/ui-inspired design with Inter font, Lucide icons, dark mode (ThemeService)
 - Railway deployment: both services deployed, nginx reverse proxy working, backend connected to Supabase DB
 - Admin user management: create, delete, reset password (ADMIN role only, `/admin/users` route)
+- AI streaming analysis: upload docs, stream AI-generated PRD via SSE
+- **PRD workflow pivot**: AI-generated PRD is now the primary artifact of the Planning & Analysis phase. The 5 requirement sections are deprecated from the UI (backend retained). PRD is saved on the project entity (`prd_content` column) via `PUT /api/projects/{id}/prd`. Users can review, edit inline, save, or regenerate the PRD.
 
 ### In Progress
-- Railway deployment is live and functional — login, projects, and sections all working
-- Next: Phase 2 planning (AI features with Anthropic Claude integration)
+- Railway deployment is live and functional
+- Next: Run `003_add_prd_content.sql` migration against Supabase before deploying PRD feature
 
 ### TODO / Deferred
 - **Email invite on user creation**: Backend has `EmailService` with `@Async` + `spring-boot-starter-mail` + Gmail SMTP config. Works locally but **Railway blocks outbound SMTP (ports 587 and 465)**. To enable in production, switch to an HTTP-based email API (e.g. Resend) instead of SMTP. The frontend form, backend plumbing, and `email` column on `users` table are already in place — just need to swap the transport.

@@ -6,8 +6,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { LucideAngularModule } from 'lucide-angular';
 import { Subscription } from 'rxjs';
-import { SectionService } from '../../../core/services/section.service';
-import { RequirementSection } from '../../../core/models/section.model';
+import { ProjectService } from '../../../core/services/project.service';
+import { Project } from '../../../core/models/project.model';
 import { FileService } from '../../../core/services/file.service';
 import { ProjectFile } from '../../../core/models/file.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
@@ -102,64 +102,107 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
                 </button>
               </div>
             } @else {
-              <h4>AI Suggestions</h4>
+              <h4>Generated PRD</h4>
               <div class="ai-result-actions">
-                <button class="btn btn-primary btn-sm" (click)="acceptAiResult()">
-                  <lucide-icon name="check" [size]="14"></lucide-icon>
-                  Accept & Save
+                <button class="btn btn-primary btn-sm" (click)="saveAiResultAsPrd()">
+                  <lucide-icon name="save" [size]="14"></lucide-icon>
+                  Save PRD
+                </button>
+                <button class="btn btn-outline btn-sm" (click)="editAiResultBeforeSave()">
+                  <lucide-icon name="pencil" [size]="14"></lucide-icon>
+                  Edit Before Saving
                 </button>
                 <button class="btn btn-outline btn-sm" (click)="triggerAnalysis()">
                   <lucide-icon name="refresh-cw" [size]="14"></lucide-icon>
                   Regenerate
                 </button>
-                <button class="btn btn-ghost btn-sm" (click)="rejectAiResult()">
+                <button class="btn btn-ghost btn-sm" (click)="dismissAiResult()">
                   <lucide-icon name="x" [size]="14"></lucide-icon>
                   Dismiss
                 </button>
               </div>
             }
           </div>
-          <div class="ai-result-content" #resultContent>
-            <pre>{{ aiResult() }}</pre>
-          </div>
+          @if (editingAiResult()) {
+            <div class="prd-editor">
+              <textarea class="prd-textarea"
+                        [ngModel]="aiResult()"
+                        (ngModelChange)="aiResult.set($event)"></textarea>
+            </div>
+          } @else {
+            <div class="ai-result-content" #resultContent>
+              <pre>{{ aiResult() }}</pre>
+            </div>
+          }
         </div>
       }
     </div>
 
-    <!-- Sections -->
-    <div class="sections">
-      @for (section of sections(); track section.id) {
-        <div class="section-card card">
-          <div class="section-header">
-            <h3>{{ section.title }}</h3>
+    <!-- Saved PRD -->
+    @if (prdContent() && !aiResult()) {
+      <div class="prd-section card">
+        <div class="prd-header">
+          <div class="prd-title">
+            <lucide-icon name="file-text" [size]="20"></lucide-icon>
+            <h3>Product Requirements Document</h3>
           </div>
-          <div class="section-body">
-            <textarea
-              class="textarea"
-              [(ngModel)]="section.content"
-              placeholder="Enter {{ section.title | lowercase }} here..."
-              rows="6">
-            </textarea>
-          </div>
-          <div class="section-footer">
-            <button class="btn btn-primary"
-                    (click)="saveSection(section)"
-                    [disabled]="savingId() === section.id">
-              <lucide-icon name="save" [size]="16"></lucide-icon>
-              @if (savingId() === section.id) {
-                Saving...
-              } @else {
-                Save
-              }
-            </button>
+          <div class="prd-actions">
+            @if (!editing()) {
+              <button class="btn btn-outline btn-sm" (click)="editPrd()">
+                <lucide-icon name="pencil" [size]="14"></lucide-icon>
+                Edit
+              </button>
+              <button class="btn btn-outline btn-sm" (click)="triggerAnalysis()">
+                <lucide-icon name="refresh-cw" [size]="14"></lucide-icon>
+                Regenerate
+              </button>
+            }
           </div>
         </div>
-      }
+        <div class="prd-body">
+          @if (editing()) {
+            <div class="prd-editor">
+              <textarea class="prd-textarea"
+                        [(ngModel)]="prdDraft"></textarea>
+            </div>
+            <div class="prd-edit-actions">
+              <button class="btn btn-primary" (click)="savePrd()" [disabled]="savingPrd()">
+                <lucide-icon name="save" [size]="16"></lucide-icon>
+                @if (savingPrd()) {
+                  Saving...
+                } @else {
+                  Save Changes
+                }
+              </button>
+              <button class="btn btn-outline" (click)="cancelEdit()">
+                Cancel
+              </button>
+            </div>
+          } @else {
+            <div class="prd-content">
+              <pre>{{ prdContent() }}</pre>
+            </div>
+          }
+        </div>
+      </div>
+    }
 
-      @if (loading()) {
-        <div class="loading">Loading sections...</div>
-      }
-    </div>
+    <!-- Empty State -->
+    @if (!prdContent() && !aiResult() && uploadedFiles().length === 0 && !loading() && !uploading() && !analyzing()) {
+      <div class="empty-state card">
+        <lucide-icon name="file-plus" [size]="48" class="empty-icon"></lucide-icon>
+        <h3>Get Started</h3>
+        <p>Upload planning documents and use AI to generate a Product Requirements Document for your project.</p>
+        <button class="btn btn-primary" (click)="fileInput.click()">
+          <lucide-icon name="upload" [size]="16"></lucide-icon>
+          Upload Documents
+        </button>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="loading">Loading...</div>
+    }
   `,
     styles: [
         `
@@ -309,6 +352,7 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
     .ai-result-actions {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .btn-sm {
@@ -366,34 +410,114 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
       font-family: inherit;
     }
 
-    .sections {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .section-card {
+    /* Saved PRD */
+    .prd-section {
+      margin-bottom: 24px;
       overflow: hidden;
     }
 
-    .section-header {
-      padding: 16px 24px 0;
+    .prd-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    .section-header h3 {
+    .prd-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prd-title h3 {
       font-size: 16px;
       font-weight: 600;
       color: var(--foreground);
+      margin: 0;
     }
 
-    .section-body {
-      padding: 12px 24px;
-    }
-
-    .section-footer {
-      padding: 0 24px 16px;
+    .prd-actions {
       display: flex;
+      gap: 8px;
+    }
+
+    .prd-body {
+      padding: 0 24px 24px;
+    }
+
+    .prd-content pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--foreground);
+      margin: 0;
+      font-family: inherit;
+    }
+
+    .prd-editor {
+      padding: 16px;
+    }
+
+    .prd-textarea {
+      width: 100%;
+      min-height: 400px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 13px;
+      line-height: 1.6;
+      font-family: inherit;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    .prd-textarea:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 2px var(--ring);
+    }
+
+    .prd-edit-actions {
+      display: flex;
+      gap: 8px;
       justify-content: flex-end;
+      padding-top: 12px;
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 24px;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .empty-icon {
+      color: var(--muted-foreground);
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin: 0;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+      color: var(--muted-foreground);
+      max-width: 400px;
+      margin: 0;
+      line-height: 1.5;
     }
 
     .loading {
@@ -405,9 +529,12 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
     ],
 })
 export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
-    sections = signal<RequirementSection[]>([]);
+    prdContent = signal<string | null>(null);
+    prdDraft = signal<string>('');
+    savingPrd = signal(false);
+    editing = signal(false);
+    editingAiResult = signal(false);
     loading = signal(true);
-    savingId = signal<string | null>(null);
     uploadedFiles = signal<ProjectFile[]>([]);
     uploading = signal(false);
     analyzing = signal(false);
@@ -417,13 +544,12 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     resultContent = viewChild<ElementRef<HTMLDivElement>>('resultContent');
 
     private projectId = '';
-    private originalContent = new Map<string, string>();
     private destroyRef = inject(DestroyRef);
     private streamSubscription: Subscription | null = null;
 
     constructor(
         private route: ActivatedRoute,
-        private sectionService: SectionService,
+        private projectService: ProjectService,
         private fileService: FileService,
         private snackBar: MatSnackBar,
     ) {
@@ -438,43 +564,40 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
             if (projectId && projectId !== this.projectId) {
                 this.projectId = projectId;
                 this.resetState();
-                this.loadSections();
+                this.loadProject();
                 this.loadFiles();
             }
         });
     }
 
     hasUnsavedChanges(): boolean {
-        return this.sections().some(s => {
-            const original = this.originalContent.get(s.id);
-            return original !== undefined && s.content !== original;
-        });
+        return !!this.aiResult() || this.editing();
     }
 
     private resetState(): void {
         this.streamSubscription?.unsubscribe();
         this.streamSubscription = null;
-        this.sections.set([]);
+        this.prdContent.set(null);
+        this.prdDraft.set('');
+        this.savingPrd.set(false);
+        this.editing.set(false);
+        this.editingAiResult.set(false);
         this.loading.set(true);
         this.uploadedFiles.set([]);
         this.uploading.set(false);
         this.analyzing.set(false);
         this.aiResult.set(null);
-        this.savingId.set(null);
-        this.originalContent.clear();
     }
 
-    private loadSections(): void {
-        this.sectionService.getByProject(this.projectId).subscribe({
-            next: sections => {
-                this.sections.set(sections);
-                this.originalContent.clear();
-                sections.forEach(s => this.originalContent.set(s.id, s.content || ''));
+    private loadProject(): void {
+        this.projectService.getById(this.projectId).subscribe({
+            next: project => {
+                this.prdContent.set(project.prdContent);
                 this.loading.set(false);
             },
             error: () => {
                 this.loading.set(false);
-                this.snackBar.open('Failed to load sections', 'Close', { duration: 3000 });
+                this.snackBar.open('Failed to load project', 'Close', { duration: 3000 });
             },
         });
     }
@@ -524,6 +647,9 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         this.streamSubscription?.unsubscribe();
         this.analyzing.set(true);
         this.aiResult.set(null);
+        this.prdDraft.set('');
+        this.editing.set(false);
+        this.editingAiResult.set(false);
 
         this.streamSubscription = this.fileService.analyzeStream(this.projectId).subscribe({
             next: chunk => {
@@ -558,38 +684,58 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         }
     }
 
-    acceptAiResult(): void {
+    saveAiResultAsPrd(): void {
         const content = this.aiResult();
         if (!content) return;
 
-        // Populate the first section (Project Description) with the AI output
-        const current = this.sections();
-        if (current.length > 0) {
-            const first = current[0];
-            first.content = content;
-            this.saveSection(first);
-            this.aiResult.set(null);
-            this.snackBar.open('AI suggestions applied to Project Description', 'Close', { duration: 3000 });
-        }
-    }
-
-    rejectAiResult(): void {
-        this.aiResult.set(null);
-    }
-
-    saveSection(section: RequirementSection): void {
-        this.savingId.set(section.id);
-        this.sectionService.update(this.projectId, section.id, { content: section.content }).subscribe({
-            next: updated => {
-                const current = this.sections();
-                this.sections.set(current.map(s => (s.id === updated.id ? updated : s)));
-                this.originalContent.set(updated.id, updated.content || '');
-                this.savingId.set(null);
-                this.snackBar.open('Section saved', 'Close', { duration: 2000 });
+        this.savingPrd.set(true);
+        this.projectService.savePrd(this.projectId, content).subscribe({
+            next: project => {
+                this.prdContent.set(project.prdContent);
+                this.aiResult.set(null);
+                this.editingAiResult.set(false);
+                this.savingPrd.set(false);
+                this.snackBar.open('PRD saved successfully', 'Close', { duration: 3000 });
             },
             error: () => {
-                this.savingId.set(null);
-                this.snackBar.open('Failed to save section', 'Close', { duration: 3000 });
+                this.savingPrd.set(false);
+                this.snackBar.open('Failed to save PRD', 'Close', { duration: 3000 });
+            },
+        });
+    }
+
+    editAiResultBeforeSave(): void {
+        this.editingAiResult.set(true);
+    }
+
+    dismissAiResult(): void {
+        this.aiResult.set(null);
+        this.editingAiResult.set(false);
+    }
+
+    editPrd(): void {
+        this.prdDraft.set(this.prdContent() || '');
+        this.editing.set(true);
+    }
+
+    cancelEdit(): void {
+        this.prdDraft.set('');
+        this.editing.set(false);
+    }
+
+    savePrd(): void {
+        this.savingPrd.set(true);
+        this.projectService.savePrd(this.projectId, this.prdDraft()).subscribe({
+            next: project => {
+                this.prdContent.set(project.prdContent);
+                this.editing.set(false);
+                this.prdDraft.set('');
+                this.savingPrd.set(false);
+                this.snackBar.open('PRD updated successfully', 'Close', { duration: 3000 });
+            },
+            error: () => {
+                this.savingPrd.set(false);
+                this.snackBar.open('Failed to save PRD', 'Close', { duration: 3000 });
             },
         });
     }

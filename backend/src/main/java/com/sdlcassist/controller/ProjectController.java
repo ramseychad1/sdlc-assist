@@ -1,5 +1,6 @@
 package com.sdlcassist.controller;
 
+import com.sdlcassist.dto.PrdRequest;
 import com.sdlcassist.dto.ProjectRequest;
 import com.sdlcassist.dto.ProjectResponse;
 import com.sdlcassist.model.Project;
@@ -51,6 +52,13 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> update(@PathVariable UUID id,
             @Valid @RequestBody ProjectRequest request) {
         Project project = projectService.update(id, request);
+        return ResponseEntity.ok(ProjectResponse.from(project));
+    }
+
+    @PutMapping("/{id}/prd")
+    public ResponseEntity<ProjectResponse> savePrd(@PathVariable UUID id,
+            @RequestBody PrdRequest request) {
+        Project project = projectService.savePrd(id, request.getContent());
         return ResponseEntity.ok(ProjectResponse.from(project));
     }
 

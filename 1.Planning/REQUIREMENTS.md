@@ -85,15 +85,8 @@ Login → Dashboard → Select/Create Project → AI Wizard → Review Generated
 - Progress indicator shows current phase
 
 ### 5.4 Planning & Analysis Phase
-- Contains the Requirements Gathering workflow
-- Fixed 5 sections displayed as editable cards:
-  1. Project Description
-  2. Functional Requirements
-  3. Non-Functional Requirements
-  4. User Stories
-  5. Acceptance Criteria
-- Each section: Markdown textarea with manual save button
-- AI assist button per section (Phase 2+)
+- **PRD Workflow (current)**: Users upload planning documents, trigger AI analysis which generates a full Product Requirements Document (PRD) via streaming. The PRD is the primary deliverable of this phase. Users can review, edit inline, save, or regenerate. The saved PRD feeds into future phases as input.
+- **Deprecated**: The original 5 requirement section cards (Project Description, Functional Requirements, Non-Functional Requirements, User Stories, Acceptance Criteria) are no longer rendered in the UI. The backend API for sections is retained but unused by the frontend.
 
 ---
 
