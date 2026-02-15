@@ -1,13 +1,15 @@
-import { Component, ElementRef, OnInit, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { LucideAngularModule } from 'lucide-angular';
 import { SectionService } from '../../../core/services/section.service';
 import { RequirementSection } from '../../../core/models/section.model';
 import { FileService } from '../../../core/services/file.service';
 import { ProjectFile } from '../../../core/models/file.model';
+import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 
 @Component({
     selector: 'app-planning-analysis',
@@ -364,7 +366,7 @@ import { ProjectFile } from '../../../core/models/file.model';
   `,
     ],
 })
-export class PlanningAnalysisComponent implements OnInit {
+export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     sections = signal<RequirementSection[]>([]);
     loading = signal(true);
     savingId = signal<string | null>(null);
@@ -376,6 +378,8 @@ export class PlanningAnalysisComponent implements OnInit {
     fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
     private projectId = '';
+    private originalContent = new Map<string, string>();
+    private destroyRef = inject(DestroyRef);
 
     constructor(
         private route: ActivatedRoute,
@@ -385,17 +389,41 @@ export class PlanningAnalysisComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.projectId = this.route.parent?.snapshot.paramMap.get('id') || '';
-        if (this.projectId) {
-            this.loadSections();
-            this.loadFiles();
-        }
+        this.route.parent!.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+            const projectId = params.get('id') || '';
+            if (projectId && projectId !== this.projectId) {
+                this.projectId = projectId;
+                this.resetState();
+                this.loadSections();
+                this.loadFiles();
+            }
+        });
+    }
+
+    hasUnsavedChanges(): boolean {
+        return this.sections().some(s => {
+            const original = this.originalContent.get(s.id);
+            return original !== undefined && s.content !== original;
+        });
+    }
+
+    private resetState(): void {
+        this.sections.set([]);
+        this.loading.set(true);
+        this.uploadedFiles.set([]);
+        this.uploading.set(false);
+        this.analyzing.set(false);
+        this.aiResult.set(null);
+        this.savingId.set(null);
+        this.originalContent.clear();
     }
 
     private loadSections(): void {
         this.sectionService.getByProject(this.projectId).subscribe({
             next: sections => {
                 this.sections.set(sections);
+                this.originalContent.clear();
+                sections.forEach(s => this.originalContent.set(s.id, s.content || ''));
                 this.loading.set(false);
             },
             error: () => {
@@ -487,6 +515,7 @@ export class PlanningAnalysisComponent implements OnInit {
             next: updated => {
                 const current = this.sections();
                 this.sections.set(current.map(s => (s.id === updated.id ? updated : s)));
+                this.originalContent.set(updated.id, updated.content || '');
                 this.savingId.set(null);
                 this.snackBar.open('Section saved', 'Close', { duration: 2000 });
             },

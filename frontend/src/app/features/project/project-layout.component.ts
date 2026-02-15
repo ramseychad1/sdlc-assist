@@ -1,6 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule } from 'lucide-angular';
 import { SidebarComponent } from '../../shared/components/sidebar.component';
 import { HeaderComponent, Breadcrumb } from '../../shared/components/header.component';
@@ -173,6 +174,8 @@ export class ProjectLayoutComponent implements OnInit {
     breadcrumbs = signal<Breadcrumb[]>([]);
     progressPercent = signal(20);
 
+    private destroyRef = inject(DestroyRef);
+
     phases: SdlcPhase[] = [
         { label: 'Planning & Analysis', route: 'planning', enabled: true },
         { label: 'Design', route: 'design', enabled: false },
@@ -189,22 +192,28 @@ export class ProjectLayoutComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        const projectId = this.route.snapshot.paramMap.get('id');
-        if (projectId) {
-            this.projectService.getById(projectId).subscribe({
-                next: (project) => {
-                    this.project.set(project);
-                    this.breadcrumbs.set([
-                        { label: 'Projects', route: '/dashboard' },
-                        { label: project.name },
-                    ]);
-                },
-                error: () => this.router.navigate(['/dashboard']),
-            });
-        }
+        this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+            const projectId = params.get('id');
+            if (projectId) {
+                this.loadProject(projectId);
+            }
+        });
 
         this.projectService.getAll().subscribe({
             next: (projects) => this.projects.set(projects),
+        });
+    }
+
+    private loadProject(projectId: string): void {
+        this.projectService.getById(projectId).subscribe({
+            next: (project) => {
+                this.project.set(project);
+                this.breadcrumbs.set([
+                    { label: 'Projects', route: '/dashboard' },
+                    { label: project.name },
+                ]);
+            },
+            error: () => this.router.navigate(['/dashboard']),
         });
     }
 

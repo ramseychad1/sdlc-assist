@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
 export const routes: Routes = [
     {
@@ -23,7 +24,8 @@ export const routes: Routes = [
         children: [
             {
                 path: 'planning',
-                loadComponent: () => import('./features/project/planning-analysis/planning-analysis.component').then(m => m.PlanningAnalysisComponent)
+                loadComponent: () => import('./features/project/planning-analysis/planning-analysis.component').then(m => m.PlanningAnalysisComponent),
+                canDeactivate: [unsavedChangesGuard]
             },
             {
                 path: '',
