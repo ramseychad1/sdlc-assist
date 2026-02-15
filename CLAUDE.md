@@ -72,10 +72,23 @@ cd frontend && npm test           # Run tests (Vitest via @angular/build:unit-te
 
 ## Environment Variables
 
-Copy `.env.example` to `.env`. Required:
+### Local Development
+Database credentials live in `backend/src/main/resources/application-local.yml` (gitignored). This file is auto-imported by the dev profile. Create it from this template:
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:5432/postgres
+    username: postgres.mtzcookrjzewywyirhja
+    password: "YOUR_PASSWORD_HERE"
+```
+
+### Production (Railway)
+Set these as Railway service env vars — do NOT put production credentials in code:
 - `DATABASE_URL` — JDBC PostgreSQL connection string
 - `DATABASE_USERNAME` / `DATABASE_PASSWORD` — DB credentials
-- `SPRING_PROFILES_ACTIVE` — Use `dev` for local development
+- `SPRING_PROFILES_ACTIVE=prod`
+- `ALLOWED_ORIGINS` — Frontend Railway domain (e.g. `https://frontend.railway.app`)
+- Frontend build arg: `API_URL` — Backend Railway domain (e.g. `https://backend.railway.app/api`)
 
 ## Project Documentation Structure
 
@@ -93,3 +106,32 @@ Copy `.env.example` to `.env`. Required:
 | File | Purpose |
 |------|---------|
 | `phase-1-implementation-plan.md` | Phase 1 build plan with steps, proposed changes, and verification |
+
+## Deployment
+
+### Railway (two separate services from same repo)
+- **Backend**: Root directory = `backend/`, uses `backend/Dockerfile` (multi-stage Maven → JRE Alpine)
+- **Frontend**: Root directory = `frontend/`, uses `frontend/Dockerfile` (multi-stage Node → nginx Alpine)
+- Frontend uses `nginx.conf` with SPA routing and Railway's `$PORT` via envsubst
+- Frontend build replaces `__API_URL__` placeholder in compiled JS via `sed` at Docker build time
+- Cross-origin session auth requires `SameSite=None; Secure` cookies (configured in `application.yml`, overridden to `lax/false` in dev)
+- `CorsConfig` reads `ALLOWED_ORIGINS` env var (comma-separated); `SecurityConfig` injects the bean (do NOT instantiate `CorsConfig` manually)
+
+## Current Status (as of 2026-02-15)
+
+### Completed
+- Phase 1 core: auth, project CRUD, requirement sections API + UI
+- UI overhaul: shadcn/ui-inspired design with Inter font, Lucide icons, dark mode (ThemeService)
+- Railway deployment prep: Dockerfiles, nginx, production config, CORS, cookie settings
+
+### In Progress
+- **Railway deployment**: Dockerfiles are pushed but Railway needs **root directories configured** per service:
+  - Backend service → Settings → Root Directory = `backend`
+  - Frontend service → Settings → Root Directory = `frontend`
+  - Then set env vars listed above and redeploy
+
+### Known Issues & Gotchas
+- `LucideAngularModule.pick()` doesn't work in Angular 21 standalone imports — icons registered globally via `LUCIDE_ICONS` provider in `app.config.ts`
+- Shell escaping with `!` in DB password breaks `source .env` and `-D` JVM args — use `application-local.yml` instead
+- `SecurityConfig` must inject `CorsConfigurationSource` bean, not `new CorsConfig().corsConfigurationSource()` (causes NPE on `allowedOrigins`)
+- `Project.owner` is `FetchType.LAZY` — repository uses `LEFT JOIN FETCH` to avoid `LazyInitializationException`

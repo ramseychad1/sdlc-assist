@@ -28,3 +28,7 @@ frontend/.cache/
 
 # Logs
 *.log
+
+# Notes
+Notes
+/Notes/*.*
