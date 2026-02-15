@@ -24,6 +24,7 @@ frontend/.cache/
 # Environment
 .env
 *.env.local
+**/application-local.yml
 
 # Logs
 *.log

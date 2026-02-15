@@ -1,8 +1,17 @@
 spring:
+  config:
+    import: optional:classpath:application-local.yml
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        secure: false
 
 logging:
   level:
