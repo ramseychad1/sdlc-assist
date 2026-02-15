@@ -15,7 +15,7 @@ import { AdminService, UserResponse, CreateUserRequest } from '../../core/servic
       <div class="page-header">
         <div>
           <h1 class="page-title">User Management</h1>
-          <p class="page-subtitle">Create and manage user accounts</p>
+          <p class="page-subtitle">Create and manage user accounts for SDLC Assist</p>
         </div>
         <button class="btn btn-primary" (click)="showCreateForm = !showCreateForm">
           <lucide-icon name="plus" [size]="16"></lucide-icon>
