@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { LucideAngularModule } from 'lucide-angular';
+import { Subscription } from 'rxjs';
 import { SectionService } from '../../../core/services/section.service';
 import { RequirementSection } from '../../../core/models/section.model';
 import { FileService } from '../../../core/services/file.service';
@@ -28,16 +29,19 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
             <lucide-icon name="upload" [size]="16"></lucide-icon>
             Upload Document
           </button>
-          <button class="btn btn-primary"
-                  (click)="triggerAnalysis()"
-                  [disabled]="analyzing() || uploadedFiles().length === 0">
-            <lucide-icon name="sparkles" [size]="16"></lucide-icon>
-            @if (analyzing()) {
-              Analyzing...
-            } @else {
+          @if (analyzing()) {
+            <button class="btn btn-destructive" (click)="stopAnalysis()">
+              <lucide-icon name="square" [size]="16"></lucide-icon>
+              Stop
+            </button>
+          } @else {
+            <button class="btn btn-primary"
+                    (click)="triggerAnalysis()"
+                    [disabled]="uploadedFiles().length === 0">
+              <lucide-icon name="sparkles" [size]="16"></lucide-icon>
               Analyze with AI
-            }
-          </button>
+            </button>
+          }
         </div>
         <input #fileInput type="file" hidden
                accept=".pdf,.docx,.txt,.md"
@@ -71,13 +75,13 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
         </div>
       }
 
-      <!-- AI Processing -->
-      @if (analyzing()) {
+      <!-- AI Processing (streaming indicator) -->
+      @if (analyzing() && !aiResult()) {
         <div class="processing-card">
           <lucide-icon name="loader" [size]="20" class="spin"></lucide-icon>
           <div class="processing-text">
-            <span class="processing-title">Analyzing documents with AI...</span>
-            <span class="processing-subtitle">This may take a moment depending on document size</span>
+            <span class="processing-title">Connecting to AI...</span>
+            <span class="processing-subtitle">Streaming will begin shortly</span>
           </div>
         </div>
       }
@@ -86,23 +90,36 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
       @if (aiResult()) {
         <div class="ai-result">
           <div class="ai-result-header">
-            <h4>AI Suggestions</h4>
-            <div class="ai-result-actions">
-              <button class="btn btn-primary btn-sm" (click)="acceptAiResult()">
-                <lucide-icon name="check" [size]="14"></lucide-icon>
-                Accept & Save
-              </button>
-              <button class="btn btn-outline btn-sm" (click)="triggerAnalysis()">
-                <lucide-icon name="refresh-cw" [size]="14"></lucide-icon>
-                Regenerate
-              </button>
-              <button class="btn btn-ghost btn-sm" (click)="rejectAiResult()">
-                <lucide-icon name="x" [size]="14"></lucide-icon>
-                Dismiss
-              </button>
-            </div>
+            @if (analyzing()) {
+              <h4>
+                <lucide-icon name="loader" [size]="14" class="spin"></lucide-icon>
+                AI Generating...
+              </h4>
+              <div class="ai-result-actions">
+                <button class="btn btn-destructive btn-sm" (click)="stopAnalysis()">
+                  <lucide-icon name="square" [size]="14"></lucide-icon>
+                  Stop
+                </button>
+              </div>
+            } @else {
+              <h4>AI Suggestions</h4>
+              <div class="ai-result-actions">
+                <button class="btn btn-primary btn-sm" (click)="acceptAiResult()">
+                  <lucide-icon name="check" [size]="14"></lucide-icon>
+                  Accept & Save
+                </button>
+                <button class="btn btn-outline btn-sm" (click)="triggerAnalysis()">
+                  <lucide-icon name="refresh-cw" [size]="14"></lucide-icon>
+                  Regenerate
+                </button>
+                <button class="btn btn-ghost btn-sm" (click)="rejectAiResult()">
+                  <lucide-icon name="x" [size]="14"></lucide-icon>
+                  Dismiss
+                </button>
+              </div>
+            }
           </div>
-          <div class="ai-result-content">
+          <div class="ai-result-content" #resultContent>
             <pre>{{ aiResult() }}</pre>
           </div>
         </div>
@@ -284,6 +301,9 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
       font-weight: 600;
       color: var(--foreground);
       margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .ai-result-actions {
@@ -310,6 +330,24 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
     .btn-ghost:hover {
       background: var(--accent);
       color: var(--foreground);
+    }
+
+    .btn-destructive {
+      background: var(--destructive, #ef4444);
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-destructive:hover {
+      opacity: 0.9;
     }
 
     .ai-result-content {
@@ -376,17 +414,23 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     aiResult = signal<string | null>(null);
 
     fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+    resultContent = viewChild<ElementRef<HTMLDivElement>>('resultContent');
 
     private projectId = '';
     private originalContent = new Map<string, string>();
     private destroyRef = inject(DestroyRef);
+    private streamSubscription: Subscription | null = null;
 
     constructor(
         private route: ActivatedRoute,
         private sectionService: SectionService,
         private fileService: FileService,
         private snackBar: MatSnackBar,
-    ) {}
+    ) {
+        this.destroyRef.onDestroy(() => {
+            this.streamSubscription?.unsubscribe();
+        });
+    }
 
     ngOnInit(): void {
         this.route.parent!.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
@@ -408,6 +452,8 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     }
 
     private resetState(): void {
+        this.streamSubscription?.unsubscribe();
+        this.streamSubscription = null;
         this.sections.set([]);
         this.loading.set(true);
         this.uploadedFiles.set([]);
@@ -475,19 +521,41 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     }
 
     triggerAnalysis(): void {
+        this.streamSubscription?.unsubscribe();
         this.analyzing.set(true);
         this.aiResult.set(null);
 
-        this.fileService.analyze(this.projectId).subscribe({
-            next: result => {
-                this.aiResult.set(result.content);
-                this.analyzing.set(false);
+        this.streamSubscription = this.fileService.analyzeStream(this.projectId).subscribe({
+            next: chunk => {
+                const current = this.aiResult() ?? '';
+                this.aiResult.set(current + chunk);
+                this.autoScrollResult();
             },
             error: () => {
                 this.analyzing.set(false);
-                this.snackBar.open('AI analysis failed. Please try again.', 'Close', { duration: 3000 });
+                if (this.aiResult()) {
+                    this.snackBar.open('Stream interrupted — partial result shown', 'Close', {
+                        duration: 4000,
+                    });
+                } else {
+                    this.snackBar.open('AI analysis failed. Please try again.', 'Close', {
+                        duration: 3000,
+                    });
+                }
+            },
+            complete: () => {
+                this.analyzing.set(false);
             },
         });
+    }
+
+    stopAnalysis(): void {
+        this.streamSubscription?.unsubscribe();
+        this.streamSubscription = null;
+        this.analyzing.set(false);
+        if (this.aiResult()) {
+            this.snackBar.open('Analysis stopped — partial result shown', 'Close', { duration: 3000 });
+        }
     }
 
     acceptAiResult(): void {
@@ -530,5 +598,14 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    private autoScrollResult(): void {
+        queueMicrotask(() => {
+            const el = this.resultContent()?.nativeElement;
+            if (el) {
+                el.scrollTop = el.scrollHeight;
+            }
+        });
     }
 }

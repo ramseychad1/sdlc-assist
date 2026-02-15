@@ -9,7 +9,7 @@ import {
   Eye, EyeOff, Plus, Ellipsis, Pencil, Trash2,
   Lock, Save, Upload, Sparkles, Check, X,
   RefreshCw, Loader, FileText, File,
-  Users, Shield, Mail,
+  Users, Shield, Mail, Square,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -20,7 +20,7 @@ const icons = {
   Eye, EyeOff, Plus, Ellipsis, Pencil, Trash2,
   Lock, Save, Upload, Sparkles, Check, X,
   RefreshCw, Loader, FileText, File,
-  Users, Shield, Mail,
+  Users, Shield, Mail, Square,
 };
 
 export const appConfig: ApplicationConfig = {

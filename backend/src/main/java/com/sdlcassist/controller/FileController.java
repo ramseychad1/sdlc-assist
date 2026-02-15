@@ -11,10 +11,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}")
@@ -23,6 +26,8 @@ public class FileController {
 
     private final FileService fileService;
     private final AiService aiService;
+
+    private final ExecutorService streamExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     @PostMapping("/files")
     public ResponseEntity<List<FileResponse>> uploadFiles(
@@ -62,5 +67,12 @@ public class FileController {
     public ResponseEntity<AiAnalysisResponse> analyzeRequirements(@PathVariable UUID projectId) {
         String content = aiService.analyzeRequirements(projectId);
         return ResponseEntity.ok(AiAnalysisResponse.builder().content(content).build());
+    }
+
+    @GetMapping(value = "/analyze/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamAnalysis(@PathVariable UUID projectId) {
+        SseEmitter emitter = new SseEmitter(300_000L);
+        streamExecutor.execute(() -> aiService.streamAnalysis(projectId, emitter));
+        return emitter;
     }
 }

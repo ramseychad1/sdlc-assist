@@ -13,6 +13,10 @@ server:
         same-site: lax
         secure: false
 
+app:
+  prompts:
+    directory: ../config/prompts
+
 logging:
   level:
     com.sdlcassist: DEBUG

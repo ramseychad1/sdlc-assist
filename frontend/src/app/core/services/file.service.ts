@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 import { ProjectFile, AiAnalysisResponse } from '../models/file.model';
 import { environment } from '../../../environments/environment';
 
@@ -40,5 +40,37 @@ export class FileService {
             {},
             { withCredentials: true }
         );
+    }
+
+    analyzeStream(projectId: string): Observable<string> {
+        return new Observable((subscriber: Subscriber<string>) => {
+            const url = `${environment.apiUrl}/projects/${projectId}/analyze/stream`;
+            const eventSource = new EventSource(url, { withCredentials: true });
+
+            eventSource.addEventListener('delta', (event: MessageEvent) => {
+                subscriber.next(event.data);
+            });
+
+            eventSource.addEventListener('done', () => {
+                eventSource.close();
+                subscriber.complete();
+            });
+
+            eventSource.addEventListener('error', (event: MessageEvent) => {
+                eventSource.close();
+                subscriber.error(new Error(event.data || 'Stream error'));
+            });
+
+            eventSource.onerror = () => {
+                if (eventSource.readyState === EventSource.CLOSED || eventSource.readyState === EventSource.CONNECTING) {
+                    eventSource.close();
+                    subscriber.error(new Error('Connection lost'));
+                }
+            };
+
+            return () => {
+                eventSource.close();
+            };
+        });
     }
 }
