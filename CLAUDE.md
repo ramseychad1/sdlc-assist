@@ -88,7 +88,7 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - `DATABASE_USERNAME` / `DATABASE_PASSWORD` — DB credentials
 - `SPRING_PROFILES_ACTIVE=prod`
 - `ALLOWED_ORIGINS` — Frontend Railway domain (e.g. `https://frontend.railway.app`)
-- Frontend build arg: `API_URL` — Backend Railway domain (e.g. `https://backend.railway.app/api`)
+- Frontend env var: `API_URL` — Backend internal URL (e.g. `http://sdlc-assist.railway.internal:8080`) — this is a **runtime** env var used by nginx, NOT a build arg
 
 ## Project Documentation Structure
 
@@ -112,26 +112,36 @@ Set these as Railway service env vars — do NOT put production credentials in c
 ### Railway (two separate services from same repo)
 - **Backend**: Root directory = `backend/`, uses `backend/Dockerfile` (multi-stage Maven → JRE Alpine)
 - **Frontend**: Root directory = `frontend/`, uses `frontend/Dockerfile` (multi-stage Node → nginx Alpine)
-- Frontend uses `nginx.conf` with SPA routing and Railway's `$PORT` via envsubst
-- Frontend build replaces `__API_URL__` placeholder in compiled JS via `sed` at Docker build time
-- Cross-origin session auth requires `SameSite=None; Secure` cookies (configured in `application.yml`, overridden to `lax/false` in dev)
+- Frontend nginx **reverse-proxies** `/api/*` to the backend via Railway private networking (`API_URL` env var)
+- nginx.conf uses `__PLACEHOLDER__` syntax (not `$VAR`) — `sed` replaces at container startup to avoid conflicting with nginx's own `$` variables
+- The Dockerfile CMD reads the DNS resolver from `/etc/resolv.conf` (Railway uses IPv6 `fd12::10`, wrapped in brackets for nginx)
+- Frontend JS always calls `/api` (same-origin) — the backend URL is never exposed to the browser
+- Frontend build hardcodes `__API_URL__` → `/api` in compiled JS via `sed` at Docker build time
+- Session cookies use `SameSite=None; Secure` (configured in `application.yml`, overridden to `lax/false` in dev)
 - `CorsConfig` reads `ALLOWED_ORIGINS` env var (comma-separated); `SecurityConfig` injects the bean (do NOT instantiate `CorsConfig` manually)
+- **Backend private networking hostname**: `sdlc-assist.railway.internal:8080`
 
 ## Current Status (as of 2026-02-15)
 
 ### Completed
 - Phase 1 core: auth, project CRUD, requirement sections API + UI
 - UI overhaul: shadcn/ui-inspired design with Inter font, Lucide icons, dark mode (ThemeService)
-- Railway deployment prep: Dockerfiles, nginx, production config, CORS, cookie settings
+- Railway deployment: both services deployed, nginx reverse proxy working, backend connected to Supabase DB
 
 ### In Progress
-- **Railway deployment**: Dockerfiles are pushed but Railway needs **root directories configured** per service:
-  - Backend service → Settings → Root Directory = `backend`
-  - Frontend service → Settings → Root Directory = `frontend`
-  - Then set env vars listed above and redeploy
+- Railway deployment is live and functional — login, projects, and sections all working
+- Next: Phase 2 planning (AI features with Anthropic Claude integration)
+
+### Railway Env Vars (current)
+- **Backend**: `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `ALLOWED_ORIGINS` (no `SPRING_PROFILES_ACTIVE` — uses default profile)
+- **Frontend**: `API_URL=http://sdlc-assist.railway.internal:8080` (no `/api` suffix — nginx passes the full request path)
 
 ### Known Issues & Gotchas
 - `LucideAngularModule.pick()` doesn't work in Angular 21 standalone imports — icons registered globally via `LUCIDE_ICONS` provider in `app.config.ts`
 - Shell escaping with `!` in DB password breaks `source .env` and `-D` JVM args — use `application-local.yml` instead
 - `SecurityConfig` must inject `CorsConfigurationSource` bean, not `new CorsConfig().corsConfigurationSource()` (causes NPE on `allowedOrigins`)
 - `Project.owner` is `FetchType.LAZY` — repository uses `LEFT JOIN FETCH` to avoid `LazyInitializationException`
+- **nginx + envsubst**: Do NOT use `${VAR}` syntax in nginx.conf templates — envsubst replaces ALL `$` patterns including nginx variables (`$proxy_host`, `$uri`). Use `__PLACEHOLDER__` syntax with `sed` instead.
+- **nginx + Railway IPv6 DNS**: Railway's internal DNS resolver is IPv6 (`fd12::10`). Must wrap in brackets `[fd12::10]` for nginx `resolver` directive.
+- **nginx variable proxy_pass**: When using a variable in `proxy_pass`, nginx passes the full original URI (no prefix stripping). Set `API_URL` to the backend root (no `/api` suffix) to avoid path doubling.
+- **GlobalExceptionHandler**: Was silently swallowing all unhandled exceptions. Added `log.error()` to the catch-all handler.
