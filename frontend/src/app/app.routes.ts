@@ -12,6 +12,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
     },
     {
+        path: 'admin/users',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/admin/user-management.component').then(m => m.UserManagement)
+    },
+    {
         path: 'projects/:id',
         canActivate: [authGuard],
         loadComponent: () => import('./features/project/project-layout.component').then(m => m.ProjectLayoutComponent),

@@ -18,12 +18,12 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         // Create default admin user if no users exist
         if (!userService.existsByUsername("admin")) {
-            userService.createUser("admin", "admin123", "Admin User", User.Role.ADMIN);
+            userService.createUser("admin", "admin123", "Admin User", User.Role.ADMIN, null);
             log.info("Created default admin user: admin / admin123");
         }
 
         if (!userService.existsByUsername("chad")) {
-            userService.createUser("chad", "password", "Chad Ramsey", User.Role.ADMIN);
+            userService.createUser("chad", "password", "Chad Ramsey", User.Role.ADMIN, null);
             log.info("Created user: chad / password");
         }
     }

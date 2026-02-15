@@ -55,6 +55,13 @@ export interface Breadcrumb {
             <div class="menu-user-role">{{ authService.currentUser?.role | titlecase }}</div>
           </div>
           <hr class="menu-divider" />
+          @if (authService.currentUser?.role === 'ADMIN') {
+            <button mat-menu-item (click)="navigateToAdmin()">
+              <lucide-icon name="users" [size]="16"></lucide-icon>
+              <span>User Management</span>
+            </button>
+            <hr class="menu-divider" />
+          }
           <button mat-menu-item (click)="onLogout()">
             <lucide-icon name="log-out" [size]="16"></lucide-icon>
             <span>Logout</span>
@@ -163,6 +170,10 @@ export class HeaderComponent {
     get userInitial(): string {
         const name = this.authService.currentUser?.displayName || 'U';
         return name.charAt(0).toUpperCase();
+    }
+
+    navigateToAdmin(): void {
+        this.router.navigate(['/admin/users']);
     }
 
     onLogout(): void {
