@@ -10,8 +10,8 @@ RUN find dist -name '*.js' -exec sed -i "s|__API_URL__|/api|g" {} +
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
+RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/nginx.conf.template
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 EXPOSE 80
-# Only substitute PORT and API_URL, leaving nginx variables ($proxy_host, etc.) intact
-CMD ["/bin/sh", "-c", "envsubst '$PORT $API_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "sed \"s|__PORT__|${PORT}|g;s|__API_URL__|${API_URL}|g\" /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
