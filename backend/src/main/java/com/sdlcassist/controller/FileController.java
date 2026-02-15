@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
@@ -70,7 +71,9 @@ public class FileController {
     }
 
     @GetMapping(value = "/analyze/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamAnalysis(@PathVariable UUID projectId) {
+    public SseEmitter streamAnalysis(@PathVariable UUID projectId, HttpServletResponse response) {
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         SseEmitter emitter = new SseEmitter(300_000L);
         streamExecutor.execute(() -> aiService.streamAnalysis(projectId, emitter));
         return emitter;
