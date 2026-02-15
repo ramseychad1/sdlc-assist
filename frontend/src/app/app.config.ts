@@ -7,7 +7,8 @@ import {
   Layers, LayoutDashboard, Folder, FolderOpen,
   ChevronRight, ChevronDown, LogOut, Sun, Moon,
   Eye, EyeOff, Plus, Ellipsis, Pencil, Trash2,
-  Lock, Save,
+  Lock, Save, Upload, Sparkles, Check, X,
+  RefreshCw, Loader, FileText, File,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -16,7 +17,8 @@ const icons = {
   Layers, LayoutDashboard, Folder, FolderOpen,
   ChevronRight, ChevronDown, LogOut, Sun, Moon,
   Eye, EyeOff, Plus, Ellipsis, Pencil, Trash2,
-  Lock, Save,
+  Lock, Save, Upload, Sparkles, Check, X,
+  RefreshCw, Loader, FileText, File,
 };
 
 export const appConfig: ApplicationConfig = {

@@ -25,12 +25,21 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
 
 app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200}
+  anthropic:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: claude-sonnet-4-5-20250929
+    max-tokens: 4096
 
 logging:
   level:
