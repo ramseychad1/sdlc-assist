@@ -2513,6 +2513,99 @@
                   ]
                 },
                 {
+                  "id": "P2PvQ",
+                  "type": "ref",
+                  "ref": "zUJ5m",
+                  "width": "fill_container",
+                  "name": "processingCard",
+                  "descendants": {
+                    "1GLgJ": {
+                      "type": "frame",
+                      "id": "1Iwrc",
+                      "name": "procHeader",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "l9OCo",
+                          "fill": "$--foreground",
+                          "content": "AI Analyzing Your Documents",
+                          "lineHeight": 1.4,
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "gXQrO",
+                          "fill": "$--muted-foreground",
+                          "content": "Upload meeting transcripts, PDFs, or requirements docs to auto-generate content",
+                          "lineHeight": 1.5,
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    "CdrVt": {
+                      "layout": "horizontal",
+                      "gap": 12,
+                      "padding": [
+                        16,
+                        24
+                      ],
+                      "alignItems": "center",
+                      "justifyContent": "space_between",
+                      "height": "fit_content",
+                      "children": [
+                        {
+                          "id": "TRLzR",
+                          "type": "ref",
+                          "ref": "uvA79",
+                          "name": "uploadBtn",
+                          "descendants": {
+                            "S5kEi": {
+                              "iconFontName": "upload"
+                            },
+                            "4zx1d": {
+                              "content": "Upload & Analyze"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "mjfBH": {
+                      "gap": 12,
+                      "justifyContent": "end",
+                      "padding": [
+                        16,
+                        24
+                      ],
+                      "height": "fit_content",
+                      "enabled": false,
+                      "children": [
+                        {
+                          "id": "8IkrJ",
+                          "type": "ref",
+                          "ref": "QRg0b",
+                          "name": "cancelBtn",
+                          "descendants": {
+                            "MHQBF": {
+                              "iconFontName": "x"
+                            },
+                            "ZYBE8": {
+                              "content": "Cancel"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
                   "type": "frame",
                   "id": "x2oU7",
                   "name": "Requirements Cards",
@@ -2529,34 +2622,77 @@
                       "name": "card1",
                       "descendants": {
                         "1GLgJ": {
-                          "height": "fit_content",
-                          "gap": 4,
-                          "padding": [
-                            16,
-                            24
-                          ],
+                          "type": "frame",
+                          "id": "j8QDL",
+                          "name": "aiCardHeader",
+                          "width": "fill_container",
+                          "gap": 12,
+                          "padding": 24,
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
                           "children": [
                             {
-                              "type": "text",
-                              "id": "iPgoT",
-                              "fill": "$--foreground",
-                              "content": "Business Requirements",
-                              "lineHeight": 1.4,
-                              "fontFamily": "Inter",
-                              "fontSize": 16,
-                              "fontWeight": "600"
+                              "type": "frame",
+                              "id": "oadxI",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 4,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "sgZpj",
+                                  "fill": "$--foreground",
+                                  "content": "Business Requirements",
+                                  "lineHeight": 1.4,
+                                  "fontFamily": "Inter",
+                                  "fontSize": 16,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ZHsdz",
+                                  "gap": 6,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon_font",
+                                      "id": "hKAHb",
+                                      "width": 14,
+                                      "height": 14,
+                                      "iconFontName": "sparkles",
+                                      "iconFontFamily": "lucide",
+                                      "fill": "$--primary"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "8XXD4",
+                                      "fill": "$--primary",
+                                      "content": "AI-generated content ready for review",
+                                      "fontFamily": "Inter",
+                                      "fontSize": 12,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "1AhGm",
+                              "type": "ref",
+                              "ref": "tEzeb",
+                              "descendants": {
+                                "Uahdv": {
+                                  "content": "AI"
+                                }
+                              }
                             }
                           ]
                         },
                         "CdrVt": {
                           "height": "fit_content",
-                          "gap": 8,
-                          "padding": [
-                            0,
-                            24,
-                            16,
-                            24
-                          ],
+                          "gap": 12,
+                          "padding": 24,
+                          "layout": "vertical",
                           "children": [
                             {
                               "id": "hvVkU",
@@ -2565,10 +2701,10 @@
                               "width": "fill_container",
                               "descendants": {
                                 "XNnff": {
-                                  "content": "Requirements"
+                                  "content": "AI Suggestion"
                                 },
                                 "Ph1l5": {
-                                  "content": "Define business requirements, goals, and objectives..."
+                                  "content": "The primary business objective is to develop a comprehensive project management platform that streamlines the software development lifecycle. Key requirements include:\n\n1. User Authentication and Authorization\n- Support for multiple user roles (Admin, PM, Viewer)\n- Secure session management\n- Role-based access control\n\n2. Project Management\n- Create, update, and archive projects\n- Track project status and phases\n- Assign team members to projects"
                                 }
                               }
                             }
@@ -2577,37 +2713,86 @@
                         "mjfBH": {
                           "height": "fit_content",
                           "padding": [
-                            0,
-                            24,
                             16,
                             24
                           ],
-                          "justifyContent": "start",
+                          "justifyContent": "space_between",
+                          "layout": "horizontal",
+                          "gap": 12,
+                          "alignItems": "center",
                           "children": [
                             {
-                              "id": "tYkfy",
-                              "type": "ref",
-                              "ref": "uvA79",
-                              "descendants": {
-                                "pQf6M": {
-                                  "children": [
-                                    {
-                                      "type": "icon_font",
-                                      "id": "Dy3Hj",
-                                      "x": 2,
-                                      "y": 2,
-                                      "width": 16,
-                                      "height": 16,
-                                      "iconFontName": "save",
-                                      "iconFontFamily": "lucide",
-                                      "fill": "$--primary-foreground"
+                              "type": "frame",
+                              "id": "Q15az",
+                              "name": "leftActions",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "VMbCC",
+                                  "type": "ref",
+                                  "ref": "SGV5S",
+                                  "name": "regenBtn",
+                                  "descendants": {
+                                    "fKzKH": {
+                                      "iconFontName": "refresh-cw"
+                                    },
+                                    "u96Hq": {
+                                      "content": "Regenerate"
                                     }
-                                  ]
+                                  }
                                 },
-                                "4zx1d": {
-                                  "content": "Save"
+                                {
+                                  "id": "gT9Oy",
+                                  "type": "ref",
+                                  "ref": "SGV5S",
+                                  "name": "editBtn",
+                                  "descendants": {
+                                    "fKzKH": {
+                                      "iconFontName": "pencil"
+                                    },
+                                    "u96Hq": {
+                                      "content": "Edit"
+                                    }
+                                  }
                                 }
-                              }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "ulanB",
+                              "name": "rightActions",
+                              "gap": 12,
+                              "children": [
+                                {
+                                  "id": "DZid4",
+                                  "type": "ref",
+                                  "ref": "QRg0b",
+                                  "name": "rejectBtn",
+                                  "descendants": {
+                                    "MHQBF": {
+                                      "iconFontName": "x"
+                                    },
+                                    "ZYBE8": {
+                                      "content": "Reject"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "VALQB",
+                                  "type": "ref",
+                                  "ref": "uvA79",
+                                  "name": "acceptBtn",
+                                  "descendants": {
+                                    "S5kEi": {
+                                      "iconFontName": "check"
+                                    },
+                                    "4zx1d": {
+                                      "content": "Accept & Save"
+                                    }
+                                  }
+                                }
+                              ]
                             }
                           ]
                         }
@@ -2986,6 +3171,449 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "FnEua",
+      "x": 2000,
+      "y": 100,
+      "name": "AI Integration Components",
+      "width": 800,
+      "layout": "vertical",
+      "gap": 32,
+      "children": [
+        {
+          "type": "frame",
+          "id": "zguM2",
+          "name": "aiUploadBtn",
+          "gap": 12,
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "OVq1T",
+              "type": "ref",
+              "ref": "uvA79",
+              "name": "uploadPrimaryBtn",
+              "descendants": {
+                "S5kEi": {
+                  "iconFontName": "sparkles"
+                },
+                "4zx1d": {
+                  "content": "AI-Assist Requirements"
+                }
+              }
+            },
+            {
+              "id": "bJrmu",
+              "type": "ref",
+              "ref": "QRg0b",
+              "name": "uploadSecondaryBtn",
+              "descendants": {
+                "MHQBF": {
+                  "iconFontName": "upload"
+                },
+                "ZYBE8": {
+                  "content": "Upload Document"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "QEkKz",
+          "type": "ref",
+          "ref": "zUJ5m",
+          "width": "fill_container",
+          "name": "suggestionCard",
+          "descendants": {
+            "1GLgJ": {
+              "type": "frame",
+              "id": "OIdwb",
+              "name": "suggHeader",
+              "width": "fill_container",
+              "gap": 12,
+              "padding": 24,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "njvVp",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "OVN4K",
+                      "fill": "$--foreground",
+                      "content": "Business Requirements",
+                      "lineHeight": 1.4,
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MYhhI",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon_font",
+                          "id": "CoPNk",
+                          "width": 14,
+                          "height": 14,
+                          "iconFontName": "sparkles",
+                          "iconFontFamily": "lucide",
+                          "fill": "$--primary"
+                        },
+                        {
+                          "type": "text",
+                          "id": "iCfo4",
+                          "fill": "$--primary",
+                          "content": "AI-generated content ready for review",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "u2RIi",
+                  "type": "ref",
+                  "ref": "tEzeb",
+                  "descendants": {
+                    "Uahdv": {
+                      "content": "AI"
+                    }
+                  }
+                }
+              ]
+            },
+            "CdrVt": {
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 24,
+              "height": "fit_content",
+              "children": [
+                {
+                  "id": "dASZM",
+                  "type": "ref",
+                  "ref": "qMGBr",
+                  "width": "fill_container",
+                  "name": "suggTextarea",
+                  "descendants": {
+                    "XNnff": {
+                      "content": "AI Suggestion"
+                    },
+                    "Ph1l5": {
+                      "content": "The primary business objective is to develop a comprehensive project management platform that streamlines the software development lifecycle. Key requirements include:\n\n1. User Authentication and Authorization\n- Support for multiple user roles (Admin, PM, Viewer)\n- Secure session management\n- Role-based access control\n\n2. Project Management\n- Create, update, and archive projects\n- Track project status and phases\n- Assign team members to projects"
+                    }
+                  }
+                }
+              ]
+            },
+            "mjfBH": {
+              "layout": "horizontal",
+              "gap": 12,
+              "justifyContent": "space_between",
+              "padding": [
+                16,
+                24
+              ],
+              "height": "fit_content",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "jD7Qp",
+                  "name": "leftActions",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "cjRUr",
+                      "type": "ref",
+                      "ref": "SGV5S",
+                      "name": "regenBtn",
+                      "descendants": {
+                        "fKzKH": {
+                          "iconFontName": "refresh-cw"
+                        },
+                        "u96Hq": {
+                          "content": "Regenerate"
+                        }
+                      }
+                    },
+                    {
+                      "id": "17Q19",
+                      "type": "ref",
+                      "ref": "SGV5S",
+                      "name": "editBtn",
+                      "descendants": {
+                        "fKzKH": {
+                          "iconFontName": "pencil"
+                        },
+                        "u96Hq": {
+                          "content": "Edit"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "4SxIN",
+                  "name": "rightActions",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "id": "hLuSn",
+                      "type": "ref",
+                      "ref": "QRg0b",
+                      "name": "rejectBtn",
+                      "descendants": {
+                        "MHQBF": {
+                          "iconFontName": "x"
+                        },
+                        "ZYBE8": {
+                          "content": "Reject"
+                        }
+                      }
+                    },
+                    {
+                      "id": "lDIsz",
+                      "type": "ref",
+                      "ref": "uvA79",
+                      "name": "acceptBtn",
+                      "descendants": {
+                        "S5kEi": {
+                          "iconFontName": "check"
+                        },
+                        "4zx1d": {
+                          "content": "Accept & Save"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "Xdv6N",
+          "type": "ref",
+          "ref": "zUJ5m",
+          "name": "processingState",
+          "width": "fill_container",
+          "descendants": {
+            "1GLgJ": {
+              "type": "frame",
+              "id": "n0EOD",
+              "name": "procHeader",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Oy5P7",
+                  "fill": "$--foreground",
+                  "content": "AI Analyzing Your Documents",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "kTiYN",
+                  "fill": "$--muted-foreground",
+                  "content": "Extracting requirements from meeting-notes.pdf...",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            "CdrVt": {
+              "layout": "horizontal",
+              "gap": 12,
+              "padding": [
+                16,
+                24
+              ],
+              "alignItems": "center",
+              "justifyContent": "space_between",
+              "height": "fit_content",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "6ZMm3",
+                  "name": "loader",
+                  "width": 20,
+                  "height": 20,
+                  "iconFontName": "loader",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--primary"
+                },
+                {
+                  "type": "text",
+                  "id": "5hWqZ",
+                  "name": "statusText",
+                  "fill": "$--muted-foreground",
+                  "content": "Processing... This may take a moment",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "RaOsh",
+                  "type": "ref",
+                  "ref": "MH2Ku",
+                  "width": 200,
+                  "name": "progBar"
+                }
+              ]
+            },
+            "mjfBH": {
+              "gap": 12,
+              "justifyContent": "end",
+              "padding": [
+                16,
+                24
+              ],
+              "height": "fit_content",
+              "enabled": true,
+              "children": [
+                {
+                  "id": "81ZZv",
+                  "type": "ref",
+                  "ref": "QRg0b",
+                  "name": "cancelBtn",
+                  "descendants": {
+                    "MHQBF": {
+                      "iconFontName": "x"
+                    },
+                    "ZYBE8": {
+                      "content": "Cancel"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "hJEKn",
+          "type": "ref",
+          "ref": "zUJ5m",
+          "width": "fill_container",
+          "name": "processingCard",
+          "descendants": {
+            "1GLgJ": {
+              "type": "frame",
+              "id": "tJu3Z",
+              "name": "procHeader",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "4gGfp",
+                  "fill": "$--foreground",
+                  "content": "Analyzing Your Document",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "36pmf",
+                  "fill": "$--muted-foreground",
+                  "content": "AI is extracting requirements from your uploaded file...",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            "CdrVt": {
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 32,
+              "alignItems": "center",
+              "justifyContent": "center",
+              "height": 180,
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "zYUn6",
+                  "name": "spinnerIcon",
+                  "width": 32,
+                  "height": 32,
+                  "iconFontName": "loader",
+                  "iconFontFamily": "lucide",
+                  "fill": "$--primary"
+                },
+                {
+                  "type": "text",
+                  "id": "fHmF5",
+                  "name": "procText",
+                  "fill": "$--muted-foreground",
+                  "content": "Processing... This may take a moment",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "id": "A0f7O",
+                  "type": "ref",
+                  "ref": "MH2Ku",
+                  "width": "fill_container",
+                  "name": "progBar"
+                }
+              ]
+            },
+            "mjfBH": {
+              "gap": 12,
+              "justifyContent": "end",
+              "padding": [
+                16,
+                24
+              ],
+              "height": "fit_content",
+              "children": [
+                {
+                  "id": "EbGiM",
+                  "type": "ref",
+                  "ref": "QRg0b",
+                  "name": "cancelBtn",
+                  "descendants": {
+                    "MHQBF": {
+                      "iconFontName": "x"
+                    },
+                    "ZYBE8": {
+                      "content": "Cancel"
+                    }
+                  }
+                }
+              ]
+            }
+          }
         }
       ]
     }
