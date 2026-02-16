@@ -1,0 +1,131 @@
+MEETING TRANSCRIPT
+Date: January 15, 2026
+Attendees: Sarah Chen (Product Manager), Marcus Williams (Director of Software Engineering)
+Subject: SDLC Assist — Product Concept and Requirements Discussion
+
+---
+
+SARAH: Thanks for taking the time, Marcus. I've been thinking about this for a while and I want to get your perspective. We have a real problem with how our teams handle requirements gathering. Every project starts differently — some PMs use Word docs, others use Confluence, some just dump notes into Slack. There's no consistency, and by the time requirements reach the dev teams, half the context is missing.
+
+MARCUS: Yeah, I see it constantly. My teams get handed a two-page doc and are expected to estimate a six-month project. Or worse, they get a 40-page document that nobody's actually read through, and the real requirements are buried on page 27. What are you thinking?
+
+SARAH: I want to build a web application called SDLC Assist. The idea is that it guides product managers through the entire software development lifecycle, starting with requirements gathering. But here's the key — it uses AI to help generate structured requirements from whatever raw input the PM has. Meeting notes, transcripts, even just a brain dump.
+
+MARCUS: Interesting. So the PM uploads their raw materials and the AI produces... what exactly?
+
+SARAH: A full Product Requirements Document. Structured as Epics, Stories, and Tasks. The kind of output that a development team can actually work from. And critically, the output needs to be portable — we want to be able to push it directly into Jira so the team can start sprint planning immediately.
+
+MARCUS: That's ambitious. Let me ask some clarifying questions. When you say Epics, Stories, Tasks — are you using the standard Agile definitions?
+
+SARAH: Yes. Epics are the large strategic goals — think "User Authentication System" or "Dashboard and Reporting." Each Epic contains Stories written in the Given/When/Then format. And each Story breaks down into Tasks that the dev team can actually pick up and work on. We're not inventing new methodology here, we're just automating the creation of it.
+
+MARCUS: And the Jira integration — you're talking about creating issues via their API? That's doable but there are nuances. Jira has specific issue types, custom fields vary by organization, and you'd need to map your hierarchy correctly. Epic to Jira Epic, Story to Jira Story, Task to Jira Task or Sub-task.
+
+SARAH: Exactly. I know the Jira piece is complex so I'm thinking we phase that. The MVP doesn't need Jira integration — it just needs to produce output that's structured enough that someone could manually import it or that we could build the API integration later.
+
+MARCUS: Smart. What about the SDLC phases you mentioned? Walk me through the full vision.
+
+SARAH: So when a PM creates a project, they'll see the full lifecycle represented as phases. Planning and Analysis is the first phase — that's where the requirements work happens. After that, we envision Design, Implementation, Testing and Integration, and Maintenance phases.
+
+MARCUS: Are all of those functional at launch?
+
+SARAH: No, only Planning and Analysis. The other phases will show up in the UI but they'll be locked with a "Coming Soon" indicator. I want users to see the full vision but we're not building five phases at once.
+
+MARCUS: Good call. Let's talk about the Planning and Analysis phase in detail. What's the user flow?
+
+SARAH: The PM creates a project — gives it a name and description. Then they navigate into the Planning and Analysis phase. There, they can upload documents — meeting transcripts, existing requirement docs, notes, whatever they have. PDFs, Word docs, plain text, markdown files. Then they click "Analyze" and the AI processes everything and generates the PRD.
+
+MARCUS: Is the AI generation synchronous or streaming?
+
+SARAH: Streaming. The PM sees the output being generated in real-time, like watching someone type. When it's done, they can review it, edit it inline if they need to tweak things, and then save it. If they don't like the result, they can regenerate.
+
+MARCUS: What AI model are we using?
+
+SARAH: Anthropic's Claude. We'll use the API with streaming enabled. We've already evaluated it and it handles the structured output format really well — Epics, Stories, Tasks, acceptance criteria. The key is in the system prompt — we need to be very prescriptive about the output format so it's consistent every time.
+
+MARCUS: Speaking of the prompt, what's the expected output structure? Like, give me a concrete example of what one Epic with its children would look like.
+
+SARAH: An Epic should have a clear title, a user-focused description in the "As a [persona], I want to [goal], so that [benefit]" format, and a priority level. Under that, you'd have Stories with Given/When/Then scenarios and acceptance criteria. Under each Story, you'd have Tasks — concrete work items that a developer or designer would pick up. Each task should indicate what area it touches — frontend, backend, database, testing.
+
+MARCUS: What about story points or effort estimation?
+
+SARAH: Not in the AI output. The development team should estimate effort themselves. The AI should focus on completeness and clarity of requirements, not pretend to know how long things take.
+
+MARCUS: Agreed. Now let's talk about users and access control. Who uses this application?
+
+SARAH: Three roles. Admins manage the system — they create user accounts, manage roles, and have full access to everything. Product Managers create and manage their own projects. And Viewers have read-only access — think stakeholders or executives who want to review the PRD but shouldn't be editing it.
+
+MARCUS: No self-registration?
+
+SARAH: Not for MVP. The Admin creates accounts. We might add email-based invites later but for now, it's admin-provisioned.
+
+MARCUS: Authentication mechanism?
+
+SARAH: Username and password, session-based. Standard Spring Security. Nothing fancy — no OAuth, no SSO for MVP. We can add those later. The session is managed with cookies.
+
+MARCUS: Got it. What about the UI itself? Do you have a vision for the layout?
+
+SARAH: Left sidebar navigation with the project list and SDLC phase links. Top header with breadcrumbs, the user menu, and the app logo. The main content area is where everything happens. The sidebar should be collapsible so PMs can maximize their workspace when they're working on requirements.
+
+MARCUS: Dashboard?
+
+SARAH: Yes, that's the landing page after login. Shows all projects the user has access to — project name, creation date, status, owner. They can create new projects from there. Clicking a project takes you into the project view.
+
+MARCUS: What are the project statuses?
+
+SARAH: Draft, Active, Completed, and Archived. A project starts as Draft when created. The PM moves it to Active when work begins. Completed when they're done with all phases. Archived when it's no longer relevant but you want to keep the history.
+
+MARCUS: Let's talk tech stack. What are you thinking?
+
+SARAH: Spring Boot for the backend — Java 21 with Maven. Angular for the frontend with Angular Material components. PostgreSQL database hosted on Supabase. Deployment on Railway with two services — the backend API and the frontend SPA.
+
+MARCUS: Why Supabase and Railway?
+
+SARAH: Supabase gives us a managed PostgreSQL instance with good tooling. Railway makes deployment simple — we can deploy both services from the same repo. The frontend is an nginx container that reverse-proxies API calls to the backend service.
+
+MARCUS: Monorepo?
+
+SARAH: Yes. Backend, frontend, and database migrations all in one repo. Keeps things simple for the team.
+
+MARCUS: Non-functional requirements — what about performance?
+
+SARAH: Pages should load within two seconds. AI streaming should begin within three seconds of the user clicking Analyze. We're desktop-first — it needs to work on modern browsers, Chrome, Firefox, Edge, Safari. Tablet should be functional but mobile is not a priority for MVP.
+
+MARCUS: Security?
+
+SARAH: OWASP top-10 protections. CORS configuration for the frontend domain. Input validation on all API endpoints. CSRF can be disabled since we're using session cookies with SameSite attributes. No sensitive data in URL parameters.
+
+MARCUS: What about the data model? What are we persisting?
+
+SARAH: Users table — id, username, password hash, display name, email, role. Projects table — id, name, description, status, owner, the PRD content as a text field, and timestamps. We also need a project files table to store the uploaded documents — we're storing the file binary in the database along with the extracted text that the AI processes.
+
+MARCUS: Storing binaries in PostgreSQL? That works for MVP but we'll want to move to object storage eventually.
+
+SARAH: Agreed, that's a future optimization. For now, we're limiting file size to 10MB and max three files per project, so the database storage is manageable.
+
+MARCUS: One more thing — the PRD itself. You said the PM can edit it after generation. Is it just free-text editing or structured field editing?
+
+SARAH: Free-text for now. The PRD is stored as markdown and displayed as rendered markdown in the UI. When the PM clicks Edit, they get a textarea with the raw markdown. When they save, it goes back to the rendered view. The markdown format is important because it gives us structure through headings and lists without requiring a complex structured editor.
+
+MARCUS: And the download capability?
+
+SARAH: The PM should be able to download the PRD as a markdown file or print it to PDF from the browser. Simple, no server-side PDF generation. The uploaded source documents should also be downloadable so the PM can reference the originals.
+
+MARCUS: I think we have a solid foundation. Let me summarize what I'm hearing for the MVP scope. Core authentication with three roles. Project CRUD with four statuses. Dashboard with project list. Project view with five SDLC phase tabs, only Planning and Analysis functional. AI-powered PRD generation from uploaded documents via Claude streaming. PRD review, edit, save, regenerate, and download. All on Spring Boot, Angular, PostgreSQL, deployed to Railway. No Jira integration, no additional phases, no OAuth — those are Phase 2 and 3.
+
+SARAH: That's exactly right. Oh, one more thing — I want a progress indicator in the project view. Something visual that shows which phase the project is in. Even though only the first phase is active, it helps communicate the full lifecycle vision.
+
+MARCUS: Makes sense. And admin capabilities?
+
+SARAH: Admin panel for user management. Create users, delete users, reset passwords. Admin can see all projects across all users. Product Managers only see their own projects.
+
+MARCUS: Are we tracking any kind of audit trail? Like who edited the PRD last, version history?
+
+SARAH: Not for MVP. We have created_at and updated_at timestamps on everything, but no version history or audit log. That's something we could add later.
+
+MARCUS: Fair enough. I think this is a great starting point. My team can work with this. When do you want to start?
+
+SARAH: As soon as possible. I'll get this documented and we'll start the build.
+
+---
+END OF TRANSCRIPT

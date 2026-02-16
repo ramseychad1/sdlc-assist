@@ -46,7 +46,7 @@ public class AiService {
     public String analyzeRequirements(UUID projectId) {
         validateApiKey();
         String combinedText = collectExtractedText(projectId);
-        String systemPrompt = promptService.getPrompt("planning-analysis");
+        String systemPrompt = promptService.getPrompt("planning-analysis-v2-prod");
 
         try {
             Map<String, Object> requestBody = Map.of(
@@ -92,7 +92,7 @@ public class AiService {
     public void streamAnalysis(UUID projectId, SseEmitter emitter) {
         validateApiKey();
         String combinedText = collectExtractedText(projectId);
-        String systemPrompt = promptService.getPrompt("planning-analysis");
+        String systemPrompt = promptService.getPrompt("planning-analysis-v2-prod");
 
         try {
             Map<String, Object> requestBody = Map.of(
