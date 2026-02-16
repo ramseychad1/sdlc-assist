@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.BufferedReader;
@@ -141,7 +142,8 @@ public class AiService {
                             if (delta != null) {
                                 String text = (String) delta.get("text");
                                 if (text != null) {
-                                    emitter.send(SseEmitter.event().name("delta").data(text));
+                                    emitter.send(SseEmitter.event().name("delta")
+                                            .data(Map.of("text", text), MediaType.APPLICATION_JSON));
                                 }
                             }
                         } else if ("message_delta".equals(type)) {

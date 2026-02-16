@@ -11,11 +11,12 @@ import { Project } from '../../../core/models/project.model';
 import { FileService } from '../../../core/services/file.service';
 import { ProjectFile } from '../../../core/models/file.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 @Component({
     selector: 'app-planning-analysis',
     standalone: true,
-    imports: [CommonModule, FormsModule, MatSnackBarModule, LucideAngularModule],
+    imports: [CommonModule, FormsModule, MatSnackBarModule, LucideAngularModule, MarkdownPipe],
     template: `
     <!-- Upload & AI Analysis Section -->
     <div class="ai-section card">
@@ -136,7 +137,11 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
             </div>
           } @else {
             <div class="ai-result-content" #resultContent>
-              <pre>{{ aiResult() }}</pre>
+              @if (analyzing()) {
+                <pre>{{ aiResult() }}</pre>
+              } @else {
+                <div class="markdown-body" [innerHTML]="aiResult() | markdown"></div>
+              }
             </div>
           }
         </div>
@@ -184,9 +189,7 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
               </button>
             </div>
           } @else {
-            <div class="prd-content">
-              <pre>{{ prdContent() }}</pre>
-            </div>
+            <div class="prd-content markdown-body" [innerHTML]="prdContent() | markdown"></div>
           }
         </div>
       </div>
@@ -466,6 +469,88 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
       color: var(--foreground);
       margin: 0;
       font-family: inherit;
+    }
+
+    :host ::ng-deep .markdown-body {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--foreground);
+
+      h1, h2, h3, h4, h5, h6 {
+        margin: 24px 0 12px;
+        font-weight: 600;
+        color: var(--foreground);
+        line-height: 1.3;
+      }
+      h1 { font-size: 24px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+      h2 { font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+      h3 { font-size: 16px; }
+      h4 { font-size: 14px; }
+
+      p { margin: 0 0 12px; }
+
+      ul, ol {
+        margin: 0 0 12px;
+        padding-left: 24px;
+      }
+
+      li { margin-bottom: 4px; }
+
+      strong { font-weight: 600; }
+
+      code {
+        background: var(--muted);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      }
+
+      pre {
+        background: var(--muted);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 0 0 12px;
+      }
+
+      pre code {
+        background: none;
+        padding: 0;
+      }
+
+      blockquote {
+        border-left: 3px solid var(--border);
+        margin: 0 0 12px;
+        padding: 4px 16px;
+        color: var(--muted-foreground);
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 12px;
+      }
+
+      th, td {
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        text-align: left;
+      }
+
+      th {
+        background: var(--muted);
+        font-weight: 600;
+      }
+
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 24px 0;
+      }
+
+      & > *:first-child { margin-top: 0; }
+      & > *:last-child { margin-bottom: 0; }
     }
 
     .prd-editor {

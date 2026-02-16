@@ -52,7 +52,12 @@ export class FileService {
             const eventSource = new EventSource(url, { withCredentials: true });
 
             eventSource.addEventListener('delta', (event: MessageEvent) => {
-                subscriber.next(event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    subscriber.next(data.text);
+                } catch {
+                    subscriber.next(event.data);
+                }
             });
 
             eventSource.addEventListener('done', () => {
