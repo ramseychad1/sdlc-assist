@@ -136,6 +136,7 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - Next: Run `003_add_prd_content.sql` migration against Supabase before deploying PRD feature
 
 ### TODO / Deferred
+- **Database object size limits**: The `prd_content` column is `TEXT` (unlimited in PostgreSQL), but large PRDs generated with high token limits (16K+) may need monitoring. Consider adding size constraints or pagination if storage/performance becomes an issue with many projects.
 - **Email invite on user creation**: Backend has `EmailService` with `@Async` + `spring-boot-starter-mail` + Gmail SMTP config. Works locally but **Railway blocks outbound SMTP (ports 587 and 465)**. To enable in production, switch to an HTTP-based email API (e.g. Resend) instead of SMTP. The frontend form, backend plumbing, and `email` column on `users` table are already in place — just need to swap the transport.
 
 ### Railway Env Vars (current)

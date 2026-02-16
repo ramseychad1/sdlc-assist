@@ -27,6 +27,10 @@ export class FileService {
         );
     }
 
+    getDownloadUrl(projectId: string, fileId: string): string {
+        return `${environment.apiUrl}/projects/${projectId}/files/${fileId}`;
+    }
+
     delete(projectId: string, fileId: string): Observable<void> {
         return this.http.delete<void>(
             `${environment.apiUrl}/projects/${projectId}/files/${fileId}`,

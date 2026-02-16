@@ -59,9 +59,14 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
                 <span class="file-name">{{ file.originalFilename }}</span>
                 <span class="file-size">{{ formatFileSize(file.fileSize) }}</span>
               </div>
-              <button class="btn-icon" (click)="deleteFile(file)" title="Remove file">
-                <lucide-icon name="x" [size]="14"></lucide-icon>
-              </button>
+              <div class="file-actions">
+                <a class="btn-icon" [href]="getDownloadUrl(file)" title="Download file" target="_blank">
+                  <lucide-icon name="download" [size]="14"></lucide-icon>
+                </a>
+                <button class="btn-icon" (click)="deleteFile(file)" title="Remove file">
+                  <lucide-icon name="x" [size]="14"></lucide-icon>
+                </button>
+              </div>
             </div>
           }
         </div>
@@ -268,6 +273,12 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
     .file-size {
       font-size: 12px;
       color: var(--muted-foreground);
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
     }
 
     .btn-icon {
@@ -738,6 +749,10 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
                 this.snackBar.open('Failed to save PRD', 'Close', { duration: 3000 });
             },
         });
+    }
+
+    getDownloadUrl(file: ProjectFile): string {
+        return this.fileService.getDownloadUrl(this.projectId, file.id);
     }
 
     formatFileSize(bytes: number): string {
