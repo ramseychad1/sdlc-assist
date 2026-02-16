@@ -8,7 +8,7 @@ import {
   ChevronRight, ChevronDown, LogOut, Sun, Moon,
   Eye, EyeOff, Plus, Ellipsis, Pencil, Trash2,
   Lock, Save, Upload, Sparkles, Check, X,
-  RefreshCw, Loader, FileText, File, FilePlus, Download,
+  RefreshCw, Loader, FileText, File, FilePlus, Download, Printer,
   Users, Shield, Mail, Square,
 } from 'lucide-angular';
 
@@ -19,7 +19,7 @@ const icons = {
   ChevronRight, ChevronDown, LogOut, Sun, Moon,
   Eye, EyeOff, Plus, Ellipsis, Pencil, Trash2,
   Lock, Save, Upload, Sparkles, Check, X,
-  RefreshCw, Loader, FileText, File, FilePlus, Download,
+  RefreshCw, Loader, FileText, File, FilePlus, Download, Printer,
   Users, Shield, Mail, Square,
 };
 

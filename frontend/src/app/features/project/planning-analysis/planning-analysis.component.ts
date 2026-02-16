@@ -12,6 +12,7 @@ import { FileService } from '../../../core/services/file.service';
 import { ProjectFile } from '../../../core/models/file.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { marked } from 'marked';
 
 @Component({
     selector: 'app-planning-analysis',
@@ -158,6 +159,14 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
           </div>
           <div class="prd-actions">
             @if (!editing()) {
+              <button class="btn btn-outline btn-sm" (click)="downloadMarkdown()">
+                <lucide-icon name="download" [size]="14"></lucide-icon>
+                Download .md
+              </button>
+              <button class="btn btn-outline btn-sm" (click)="printPrd()">
+                <lucide-icon name="printer" [size]="14"></lucide-icon>
+                Save as PDF
+              </button>
               <button class="btn btn-outline btn-sm" (click)="editPrd()">
                 <lucide-icon name="pencil" [size]="14"></lucide-icon>
                 Edit
@@ -640,6 +649,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     resultContent = viewChild<ElementRef<HTMLDivElement>>('resultContent');
 
     private projectId = '';
+    private projectName = '';
     private destroyRef = inject(DestroyRef);
     private streamSubscription: Subscription | null = null;
 
@@ -688,6 +698,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     private loadProject(): void {
         this.projectService.getById(this.projectId).subscribe({
             next: project => {
+                this.projectName = project.name;
                 this.prdContent.set(project.prdContent);
                 this.loading.set(false);
             },
@@ -834,6 +845,51 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
                 this.snackBar.open('Failed to save PRD', 'Close', { duration: 3000 });
             },
         });
+    }
+
+    downloadMarkdown(): void {
+        const content = this.prdContent();
+        if (!content) return;
+        const slug = this.projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const filename = `${slug}-prd.md`;
+        const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    printPrd(): void {
+        const content = this.prdContent();
+        if (!content) return;
+        const html = marked.parse(content) as string;
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
+        printWindow.document.write(`<!DOCTYPE html>
+<html><head>
+<title>${this.projectName} — PRD</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; font-size: 14px; line-height: 1.7; }
+  h1 { font-size: 24px; border-bottom: 2px solid #e5e5e5; padding-bottom: 8px; }
+  h2 { font-size: 20px; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; margin-top: 32px; }
+  h3 { font-size: 16px; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #d0d0d0; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f5; font-weight: 600; }
+  code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  pre { background: #f5f5f5; padding: 16px; border-radius: 6px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  blockquote { border-left: 3px solid #d0d0d0; margin: 12px 0; padding: 4px 16px; color: #666; }
+  hr { border: none; border-top: 1px solid #e5e5e5; margin: 24px 0; }
+  @media print { body { margin: 0; } }
+</style>
+</head><body>${html}</body></html>`);
+        printWindow.document.close();
+        printWindow.onload = () => {
+            printWindow.print();
+        };
     }
 
     getDownloadUrl(file: ProjectFile): string {
