@@ -45,7 +45,7 @@ import { TemplateLightboxComponent } from '../template-lightbox/template-lightbo
         </div>
       } @else {
         <!-- Gallery grid -->
-        <div class="gallery-grid">
+        <div class="gallery-grid" [class.has-action-bar]="currentProject()?.selectedTemplateId">
           @for (template of templates(); track template.id) {
             <div class="card" [class.selected]="isSelected(template.id)">
               <div class="card-image">
@@ -106,6 +106,37 @@ import { TemplateLightboxComponent } from '../template-lightbox/template-lightbo
         </div>
       }
 
+      <!-- Next Step Action Bar -->
+      @if (pendingTemplateId(); as selectedId) {
+        @for (template of templates(); track template.id) {
+          @if (template.id === selectedId) {
+            <div class="action-bar">
+              <div class="action-bar-content">
+                <div class="selected-info">
+                  <img [src]="template.thumbnail" [alt]="template.name" class="selected-thumbnail" />
+                  <div class="selected-details">
+                    <span class="selected-label">Selected Template</span>
+                    <span class="selected-name">{{ template.name }}</span>
+                  </div>
+                </div>
+                <button
+                  class="btn btn-primary btn-lg"
+                  (click)="onGenerate()"
+                  [disabled]="selecting()">
+                  @if (selecting()) {
+                    <lucide-icon name="loader" [size]="18" class="spin"></lucide-icon>
+                  } @else {
+                    <lucide-icon name="sparkles" [size]="18"></lucide-icon>
+                  }
+                  <span>Generate Design System</span>
+                  <span class="coming-soon-badge">Coming Soon</span>
+                </button>
+              </div>
+            </div>
+          }
+        }
+      }
+
       <!-- Lightbox -->
       <app-template-lightbox
         [template]="selectedForPreview()"
@@ -124,6 +155,10 @@ import { TemplateLightboxComponent } from '../template-lightbox/template-lightbo
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 24px;
+    }
+
+    .gallery-grid.has-action-bar {
+      padding-bottom: 120px; /* Space for action bar */
     }
 
     @media (max-width: 1024px) {
@@ -355,6 +390,116 @@ import { TemplateLightboxComponent } from '../template-lightbox/template-lightbo
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+
+    /* Action Bar */
+    .action-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 50;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .action-bar-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .selected-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .selected-thumbnail {
+      width: 64px;
+      height: 40px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      object-fit: cover;
+    }
+
+    .selected-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .selected-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+
+    .selected-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .btn-lg {
+      height: 44px;
+      padding: 0 24px;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .coming-soon-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--muted);
+      color: var(--muted-foreground);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 768px) {
+      .action-bar-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+      }
+
+      .selected-info {
+        justify-content: center;
+      }
+
+      .btn-lg {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   `]
 })
 export class TemplateGalleryComponent implements OnInit {
@@ -369,6 +514,7 @@ export class TemplateGalleryComponent implements OnInit {
   selecting = signal(false);
   showSuccessToast = signal(false);
   selectedForPreview = signal<TemplateEntry | null>(null);
+  pendingTemplateId = signal<string | null>(null); // Local state before saving
 
   ngOnInit(): void {
     // Delay loading to avoid change detection issues
@@ -396,10 +542,14 @@ export class TemplateGalleryComponent implements OnInit {
   }
 
   private loadCurrentProject(): void {
-    const projectId = this.route.parent?.snapshot.paramMap.get('id');
+    // Need to go up two levels: ux-design -> design -> projects/:id
+    const projectId = this.route.parent?.parent?.snapshot.paramMap.get('id');
+    console.log('Loading project with ID:', projectId);
     if (projectId) {
       this.projectService.getById(projectId).subscribe({
         next: (project) => {
+          console.log('Project loaded:', project);
+          console.log('Selected template ID:', project.selectedTemplateId);
           this.currentProject.set(project);
         },
         error: (err) => {
@@ -410,10 +560,16 @@ export class TemplateGalleryComponent implements OnInit {
   }
 
   isSelected(templateId: string): boolean {
+    // Check pending selection first, then fall back to saved selection
+    const pending = this.pendingTemplateId();
+    if (pending !== null) {
+      return pending === templateId;
+    }
     return this.currentProject()?.selectedTemplateId === templateId;
   }
 
   onPreview(template: TemplateEntry): void {
+    console.log('onPreview called for template:', template.id);
     this.selectedForPreview.set(template);
   }
 
@@ -422,16 +578,31 @@ export class TemplateGalleryComponent implements OnInit {
   }
 
   onSelect(template: TemplateEntry): void {
-    const projectId = this.currentProject()?.id;
-    if (!projectId) return;
+    console.log('onSelect called for template:', template.id);
+    // Just set local state, don't save to DB yet
+    this.pendingTemplateId.set(template.id);
+  }
 
+  onGenerate(): void {
+    const projectId = this.currentProject()?.id;
+    const templateId = this.pendingTemplateId();
+
+    if (!projectId || !templateId) {
+      console.log('Missing project ID or template ID');
+      return;
+    }
+
+    console.log('Generating design system with template:', templateId);
     this.selecting.set(true);
 
-    this.projectService.selectTemplate(projectId, template.id).subscribe({
+    // Save the selection to database
+    this.projectService.selectTemplate(projectId, templateId).subscribe({
       next: (updatedProject) => {
         this.currentProject.set(updatedProject);
         this.selecting.set(false);
         this.showSuccessToast.set(true);
+
+        // TODO: Phase 2.2 - Trigger actual design system generation here
 
         // Hide toast after 3 seconds
         setTimeout(() => {
@@ -440,8 +611,8 @@ export class TemplateGalleryComponent implements OnInit {
       },
       error: (err) => {
         this.selecting.set(false);
-        this.error.set('Failed to select template. Please try again.');
-        console.error('Failed to select template:', err);
+        this.error.set('Failed to save template selection. Please try again.');
+        console.error('Failed to save template selection:', err);
       }
     });
   }
