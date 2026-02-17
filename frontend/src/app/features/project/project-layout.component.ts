@@ -288,14 +288,14 @@ export class ProjectLayoutComponent implements OnInit {
         this.phases.set([
             { label: 'Planning & Analysis', route: 'planning', enabled: true },
             {
-                label: 'Design',
-                route: 'design',
+                label: 'UX Design',
+                route: 'ux-design',
                 enabled: hasPrd,
                 tooltip: hasPrd ? undefined : 'Complete Planning & Analysis first'
             },
-            { label: 'Implementation', route: 'implementation', enabled: false },
-            { label: 'Testing & Integration', route: 'testing', enabled: false },
-            { label: 'Maintenance', route: 'maintenance', enabled: false },
+            { label: 'Technical Design', route: 'technical-design', enabled: false },
+            { label: 'Implementation Plan', route: 'implementation', enabled: false },
+            { label: 'Artifacts & Export', route: 'artifacts', enabled: false },
         ]);
     }
 
@@ -354,8 +354,8 @@ export class ProjectLayoutComponent implements OnInit {
             return !!project.prdContent && project.prdContent.trim().length > 0;
         }
 
-        // Design is done when template is selected
-        if (phase.route === 'design') {
+        // UX Design is done when template is selected
+        if (phase.route === 'ux-design') {
             return !!project.selectedTemplateId;
         }
 

@@ -1,13 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TemplateGalleryComponent } from '../template-gallery/template-gallery.component';
+import { UxDesignStepperComponent } from '../components/ux-design-stepper/ux-design-stepper.component';
 
 @Component({
   selector: 'app-ux-design',
   standalone: true,
-  imports: [CommonModule, TemplateGalleryComponent],
+  imports: [CommonModule, TemplateGalleryComponent, UxDesignStepperComponent],
   template: `
     <div class="ux-design">
+      <app-ux-design-stepper [currentStep]="1"></app-ux-design-stepper>
+
       <div class="phase-header">
         <h2>Design Template Selection</h2>
         <p class="phase-description">

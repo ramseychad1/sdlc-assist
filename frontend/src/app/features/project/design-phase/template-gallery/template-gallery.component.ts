@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { TemplateService } from '../../../../core/services/template.service';
 import { ProjectService } from '../../../../core/services/project.service';
@@ -129,7 +129,6 @@ import { TemplateLightboxComponent } from '../template-lightbox/template-lightbo
                     <lucide-icon name="sparkles" [size]="18"></lucide-icon>
                   }
                   <span>Generate Design System</span>
-                  <span class="coming-soon-badge">Coming Soon</span>
                 </button>
               </div>
             </div>
@@ -506,6 +505,7 @@ export class TemplateGalleryComponent implements OnInit {
   private templateService = inject(TemplateService);
   private projectService = inject(ProjectService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   templates = signal<TemplateEntry[]>([]);
   currentProject = signal<Project | null>(null);
@@ -542,7 +542,7 @@ export class TemplateGalleryComponent implements OnInit {
   }
 
   private loadCurrentProject(): void {
-    // Need to go up two levels: ux-design -> design -> projects/:id
+    // Need to go up two levels: template-selection -> ux-design -> projects/:id
     const projectId = this.route.parent?.parent?.snapshot.paramMap.get('id');
     console.log('Loading project with ID:', projectId);
     if (projectId) {
@@ -551,6 +551,11 @@ export class TemplateGalleryComponent implements OnInit {
           console.log('Project loaded:', project);
           console.log('Selected template ID:', project.selectedTemplateId);
           this.currentProject.set(project);
+
+          // If template was already selected but not yet generated, restore pending state
+          if (project.selectedTemplateId && !this.pendingTemplateId()) {
+            this.pendingTemplateId.set(project.selectedTemplateId);
+          }
         },
         error: (err) => {
           console.error('Failed to load project:', err);
@@ -600,14 +605,9 @@ export class TemplateGalleryComponent implements OnInit {
       next: (updatedProject) => {
         this.currentProject.set(updatedProject);
         this.selecting.set(false);
-        this.showSuccessToast.set(true);
 
-        // TODO: Phase 2.2 - Trigger actual design system generation here
-
-        // Hide toast after 3 seconds
-        setTimeout(() => {
-          this.showSuccessToast.set(false);
-        }, 3000);
+        // Navigate to design system generation page
+        this.router.navigate(['/projects', projectId, 'ux-design', 'design-system']);
       },
       error: (err) => {
         this.selecting.set(false);
