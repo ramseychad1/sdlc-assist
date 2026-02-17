@@ -1,0 +1,67 @@
+{
+  "id": "cardi-brand",
+  "name": "Cardinal Brand",
+  "tag": "Healthcare Enterprise",
+  "description": "Cardinal Health branded design system with red primary accent, soft neutrals, and light blue highlights. Professional healthcare aesthetic.",
+  "source": "Cardinal Health Color Palette",
+  "designTokens": {
+    "background":           "#f3f3f3",
+    "foreground":           "#333333",
+    "card":                 "#ffffff",
+    "primary":              "#e41f35",
+    "primaryForeground":    "#ffffff",
+    "secondary":            "#dedede",
+    "secondaryForeground":  "#333333",
+    "muted":                "#efefef",
+    "mutedForeground":      "#636363",
+    "accent":               "#bbdde6",
+    "accentForeground":     "#15181e",
+    "destructive":          "#e41f35",
+    "border":               "#efefef",
+    "input":                "#999999",
+    "ring":                 "#808080",
+    "sidebar":              "#ffffff",
+    "sidebarBorder":        "#efefef",
+    "sidebarPrimary":       "#e41f35",
+    "info":                 "#337ab7",
+    "success":              "#fde69f",
+    "warning":              "#fde69f",
+    "borderRadius":         "6px",
+    "fontFamily":           "Geist, Inter, -apple-system, sans-serif",
+    "fontScale":            "compact"
+  },
+  "themes": {
+    "modes": ["Light"]
+  },
+  "components": [
+    "Sidebar", "Button", "Avatar", "Badge", "Accordion", "Alert",
+    "Textarea", "Select", "Input", "Tooltip", "Switch", "Radio",
+    "Progress", "Breadcrumb", "Card", "Tabs", "Dialog", "Dropdown",
+    "Checkbox", "Combobox", "Pagination", "DataTable", "Table",
+    "SidebarItem", "SidebarSection"
+  ],
+  "layoutPattern": "sidebar-left-fixed",
+  "componentStyle": "healthcare-enterprise",
+  "density": "comfortable",
+  "colorMood": "professional-healthcare",
+  "keyPatterns": [
+    "Cardinal Health red (#e41f35) as primary action color",
+    "Soft neutral backgrounds (#f3f3f3, #efefef, #dedede)",
+    "Light blue accent (#bbdde6) for info states and highlights",
+    "Fixed 256px left sidebar with white background",
+    "Clean 6px border radius on all components",
+    "Light yellow (#fde69f) for success and warning states",
+    "Blue info color (#337ab7) for informational elements",
+    "Minimal shadows and borders for clean enterprise look",
+    "PRD section headers use Cardinal red for emphasis",
+    "Compact 13px body text with Geist/Inter typeface"
+  ],
+  "avoidPatterns": [
+    "Vibrant or saturated secondary colors",
+    "Heavy drop shadows or elevation effects",
+    "Gradient backgrounds or overlays",
+    "Dark mode variations",
+    "Playful or casual design elements"
+  ],
+  "promptHint": "Generate a design system aligned with Cardinal Health's professional healthcare brand identity. Use Cardinal red (#e41f35) as the primary action color for buttons, active states, and key interactive elements. Apply soft neutral backgrounds: #f3f3f3 for the page background, #efefef for muted surfaces, #dedede for secondary elements, and white (#ffffff) for cards and sidebar. Use light blue (#bbdde6) as an accent for info alerts and highlighted sections. Success and warning states both use light yellow (#fde69f) with dark text. The sidebar is 256px with white background and subtle borders. Apply 6px border-radius consistently. Use Geist or Inter as the typeface with 13px body text for information density. PRD section headers (h2) should be colored in Cardinal red. The overall aesthetic prioritizes clarity, accessibility, and trust — appropriate for healthcare enterprise software. Avoid decorative elements, heavy shadows, or anything that detracts from professional credibility."
+}

@@ -18,6 +18,15 @@
       "thumbnail": "assets/templates/nitro-basic/thumbnail.png",
       "preview":   "assets/templates/nitro-basic/preview.png",
       "metadata":  "assets/templates/nitro-basic/metadata.json"
+    },
+    {
+      "id": "cardi-brand",
+      "name": "Cardinal Brand",
+      "tag": "Healthcare Enterprise",
+      "description": "Cardinal Health branded design system with red primary accent, soft neutrals, and light blue highlights. Professional healthcare aesthetic.",
+      "thumbnail": "assets/templates/cardi-brand/thumbnail.png",
+      "preview":   "assets/templates/cardi-brand/preview.png",
+      "metadata":  "assets/templates/cardi-brand/metadata.json"
     }
   ]
 }
