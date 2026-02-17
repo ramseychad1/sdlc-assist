@@ -91,7 +91,10 @@ import { Project } from '../../core/models/project.model';
                 <ng-container matColumnDef="updatedAt">
                   <th mat-header-cell *matHeaderCellDef>Last Updated</th>
                   <td mat-cell *matCellDef="let project">
-                    {{ project.updatedAt | date:'mediumDate' }}
+                    <div class="date-cell">
+                      <span>{{ project.updatedAt | date:'mediumDate':'America/New_York' }}</span>
+                      <span class="time-sub">{{ project.updatedAt | date:'hh:mm a':'America/New_York' }} ET</span>
+                    </div>
                   </td>
                 </ng-container>
 
@@ -190,6 +193,17 @@ import { Project } from '../../core/models/project.model';
     .empty-icon {
       color: var(--muted-foreground);
       margin-bottom: 16px;
+    }
+
+    .date-cell {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.4;
+    }
+
+    .time-sub {
+      font-size: 12px;
+      color: var(--muted-foreground);
     }
 
     .empty-state h3 {
