@@ -75,4 +75,19 @@ public class UserService implements UserDetailsService {
         }
         userRepository.deleteById(id);
     }
+
+    public User updateUser(UUID id, String displayName, User.Role role, String password) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setDisplayName(displayName);
+        user.setRole(role);
+
+        // Only update password if provided
+        if (password != null && !password.isBlank()) {
+            user.setPasswordHash(passwordEncoder.encode(password));
+        }
+
+        return userRepository.save(user);
+    }
 }

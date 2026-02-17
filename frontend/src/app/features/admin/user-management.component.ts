@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { HeaderComponent, Breadcrumb } from '../../shared/components/header.component';
-import { AdminService, UserResponse, CreateUserRequest } from '../../core/services/admin.service';
+import { AdminService, UserResponse, CreateUserRequest, UpdateUserRequest } from '../../core/services/admin.service';
 
 @Component({
   selector: 'app-user-management',
@@ -128,7 +128,7 @@ import { AdminService, UserResponse, CreateUserRequest } from '../../core/servic
                   </td>
                   <td class="date-cell">{{ user.createdAt | date: 'mediumDate' }}</td>
                   <td class="action-cell">
-                    <button class="btn btn-ghost btn-icon" (click)="startResetPassword(user)" title="Reset password">
+                    <button class="btn btn-ghost btn-icon" (click)="startEditUser(user)" title="Edit user">
                       <lucide-icon name="pencil" [size]="16"></lucide-icon>
                     </button>
                     <button class="btn btn-ghost btn-icon btn-danger" (click)="deleteUser(user)" title="Delete user">
@@ -137,37 +137,59 @@ import { AdminService, UserResponse, CreateUserRequest } from '../../core/servic
                   </td>
                 </tr>
                 @if (editingUserId === user.id) {
-                  <tr class="password-row">
+                  <tr class="edit-row">
                     <td colspan="6">
-                      <div class="password-edit">
-                        <label class="form-label">New password for {{ user.displayName }}</label>
-                        <div class="password-edit-row">
-                          <input
-                            class="form-input password-input"
-                            [class.input-error]="passwordSubmitted && !newPassword"
-                            type="text"
-                            [(ngModel)]="newPassword"
-                            autocomplete="off"
-                          />
-                          <button class="btn btn-primary btn-sm" (click)="savePassword()" [disabled]="savingPassword">
-                            @if (savingPassword) {
+                      <div class="edit-form">
+                        <h4 class="edit-title">Edit {{ user.username }}</h4>
+                        <div class="edit-grid">
+                          <div class="form-group">
+                            <label class="form-label">Display Name</label>
+                            <input
+                              class="form-input"
+                              [class.input-error]="editSubmitted && !editUser.displayName.trim()"
+                              [(ngModel)]="editUser.displayName"
+                              autocomplete="off"
+                            />
+                            @if (editSubmitted && !editUser.displayName.trim()) {
+                              <span class="field-error">Display name is required</span>
+                            }
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <select class="form-input" [(ngModel)]="editUser.role">
+                              <option value="ADMIN">Admin</option>
+                              <option value="PRODUCT_MANAGER">Product Manager</option>
+                              <option value="VIEWER">Viewer</option>
+                            </select>
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">New Password <span class="optional-hint">(leave blank to keep current)</span></label>
+                            <input
+                              class="form-input"
+                              type="text"
+                              [(ngModel)]="editUser.password"
+                              autocomplete="off"
+                              placeholder="Optional"
+                            />
+                          </div>
+                        </div>
+                        @if (editError) {
+                          <span class="field-error">{{ editError }}</span>
+                        }
+                        @if (editSuccess) {
+                          <span class="success-text">User updated successfully</span>
+                        }
+                        <div class="edit-actions">
+                          <button class="btn btn-ghost btn-sm" (click)="cancelEdit()">Cancel</button>
+                          <button class="btn btn-primary btn-sm" (click)="saveUser()" [disabled]="savingEdit">
+                            @if (savingEdit) {
                               <lucide-icon name="loader" [size]="14" class="spin"></lucide-icon>
                             } @else {
                               <lucide-icon name="save" [size]="14"></lucide-icon>
                             }
-                            <span>Save</span>
+                            <span>Save Changes</span>
                           </button>
-                          <button class="btn btn-ghost btn-sm" (click)="cancelResetPassword()">Cancel</button>
                         </div>
-                        @if (passwordSubmitted && !newPassword) {
-                          <span class="field-error">Password is required</span>
-                        }
-                        @if (passwordError) {
-                          <span class="field-error">{{ passwordError }}</span>
-                        }
-                        @if (passwordSuccess) {
-                          <span class="success-text">Password updated</span>
-                        }
                       </div>
                     </td>
                   </tr>
@@ -350,30 +372,39 @@ import { AdminService, UserResponse, CreateUserRequest } from '../../core/servic
         white-space: nowrap;
       }
 
-      .password-row td {
+      .edit-row td {
         padding: 0 16px 12px;
         border-bottom: 1px solid var(--border);
       }
 
-      .password-edit {
+      .edit-form {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        padding: 12px 16px;
+        gap: 12px;
+        padding: 16px;
         background: var(--background);
         border-radius: var(--radius);
         border: 1px solid var(--border);
       }
 
-      .password-edit-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+      .edit-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--foreground);
+        margin: 0;
       }
 
-      .password-input {
-        flex: 1;
-        max-width: 300px;
+      .edit-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+      }
+
+      .edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 4px;
       }
 
       .btn-sm {
@@ -443,11 +474,15 @@ export class UserManagement implements OnInit {
   submitted = false;
 
   editingUserId: string | null = null;
-  newPassword = '';
-  savingPassword = false;
-  passwordSubmitted = false;
-  passwordError = '';
-  passwordSuccess = false;
+  editUser: UpdateUserRequest = {
+    displayName: '',
+    role: 'VIEWER',
+    password: '',
+  };
+  savingEdit = false;
+  editSubmitted = false;
+  editError = '';
+  editSuccess = false;
 
   newUser: CreateUserRequest = {
     username: '',
@@ -518,45 +553,79 @@ export class UserManagement implements OnInit {
     });
   }
 
-  startResetPassword(user: UserResponse): void {
-    this.editingUserId = this.editingUserId === user.id ? null : user.id;
-    this.newPassword = '';
-    this.passwordSubmitted = false;
-    this.passwordError = '';
-    this.passwordSuccess = false;
-  }
-
-  savePassword(): void {
-    this.passwordSubmitted = true;
-    this.passwordError = '';
-    this.passwordSuccess = false;
-    if (!this.newPassword) {
+  startEditUser(user: UserResponse): void {
+    if (this.editingUserId === user.id) {
+      this.editingUserId = null;
       return;
     }
 
-    this.savingPassword = true;
-    this.adminService.resetPassword(this.editingUserId!, this.newPassword).subscribe({
-      next: () => {
-        this.savingPassword = false;
-        this.passwordSuccess = true;
-        this.newPassword = '';
-        this.passwordSubmitted = false;
+    this.editingUserId = user.id;
+    this.editUser = {
+      displayName: user.displayName,
+      role: user.role,
+      password: '',
+    };
+    this.editSubmitted = false;
+    this.editError = '';
+    this.editSuccess = false;
+  }
+
+  saveUser(): void {
+    this.editSubmitted = true;
+    this.editError = '';
+    this.editSuccess = false;
+
+    if (!this.editUser.displayName.trim()) {
+      return;
+    }
+
+    this.savingEdit = true;
+    const request: UpdateUserRequest = {
+      displayName: this.editUser.displayName,
+      role: this.editUser.role,
+    };
+
+    // Only include password if it was provided
+    if (this.editUser.password && this.editUser.password.trim()) {
+      request.password = this.editUser.password;
+    }
+
+    this.adminService.updateUser(this.editingUserId!, request).subscribe({
+      next: updatedUser => {
+        this.savingEdit = false;
+        this.editSuccess = true;
+        this.editSubmitted = false;
         this.cdr.markForCheck();
+
+        // Update the user in the list
+        const index = this.users.findIndex(u => u.id === updatedUser.id);
+        if (index !== -1) {
+          this.users[index] = updatedUser;
+        }
+
+        // Close the edit form after a brief delay
+        setTimeout(() => {
+          this.cancelEdit();
+        }, 1500);
       },
       error: () => {
-        this.savingPassword = false;
-        this.passwordError = 'Failed to reset password.';
+        this.savingEdit = false;
+        this.editError = 'Failed to update user.';
         this.cdr.markForCheck();
       },
     });
   }
 
-  cancelResetPassword(): void {
+  cancelEdit(): void {
     this.editingUserId = null;
-    this.newPassword = '';
-    this.passwordSubmitted = false;
-    this.passwordError = '';
-    this.passwordSuccess = false;
+    this.editUser = {
+      displayName: '',
+      role: 'VIEWER',
+      password: '',
+    };
+    this.editSubmitted = false;
+    this.editError = '';
+    this.editSuccess = false;
   }
 
   cancelCreate(): void {

@@ -2,6 +2,7 @@ package com.sdlcassist.controller;
 
 import com.sdlcassist.dto.CreateUserRequest;
 import com.sdlcassist.dto.ResetPasswordRequest;
+import com.sdlcassist.dto.UpdateUserRequest;
 import com.sdlcassist.dto.UserResponse;
 import com.sdlcassist.model.User;
 import com.sdlcassist.service.EmailService;
@@ -65,6 +66,18 @@ public class AdminController {
                                                @Valid @RequestBody ResetPasswordRequest request) {
         userService.resetPassword(userId, request.getNewPassword());
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/users/{userId}")
+    public ResponseEntity<UserResponse> updateUser(@PathVariable UUID userId,
+                                                    @Valid @RequestBody UpdateUserRequest request) {
+        User user = userService.updateUser(
+                userId,
+                request.getDisplayName(),
+                request.getRole(),
+                request.getPassword()
+        );
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @DeleteMapping("/users/{userId}")

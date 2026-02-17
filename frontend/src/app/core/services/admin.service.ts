@@ -20,6 +20,12 @@ export interface CreateUserRequest {
   email: string;
 }
 
+export interface UpdateUserRequest {
+  displayName: string;
+  role: string;
+  password?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -40,6 +46,12 @@ export class AdminService {
 
   resetPassword(userId: string, newPassword: string): Observable<void> {
     return this.http.patch<void>(`${environment.apiUrl}/admin/users/${userId}/password`, { newPassword }, {
+      withCredentials: true,
+    });
+  }
+
+  updateUser(userId: string, request: UpdateUserRequest): Observable<UserResponse> {
+    return this.http.patch<UserResponse>(`${environment.apiUrl}/admin/users/${userId}`, request, {
       withCredentials: true,
     });
   }
