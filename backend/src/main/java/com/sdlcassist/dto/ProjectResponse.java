@@ -14,6 +14,7 @@ public class ProjectResponse {
     private String name;
     private String description;
     private String prdContent;
+    private String selectedTemplateId;
     private String status;
     private String ownerName;
     private UUID ownerId;
@@ -26,6 +27,7 @@ public class ProjectResponse {
                 .name(project.getName())
                 .description(project.getDescription())
                 .prdContent(project.getPrdContent())
+                .selectedTemplateId(project.getSelectedTemplateId())
                 .status(project.getStatus().name())
                 .ownerName(project.getOwner() != null ? project.getOwner().getDisplayName() : null)
                 .ownerId(project.getOwner() != null ? project.getOwner().getId() : null)

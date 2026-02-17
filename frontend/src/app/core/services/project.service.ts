@@ -32,6 +32,10 @@ export class ProjectService {
         return this.http.put<Project>(`${this.baseUrl}/${id}/prd`, { content }, { withCredentials: true });
     }
 
+    selectTemplate(id: string, templateId: string): Observable<Project> {
+        return this.http.put<Project>(`${this.baseUrl}/${id}/template`, { templateId }, { withCredentials: true });
+    }
+
     delete(id: string): Observable<void> {
         return this.http.delete<void>(`${this.baseUrl}/${id}`, { withCredentials: true });
     }

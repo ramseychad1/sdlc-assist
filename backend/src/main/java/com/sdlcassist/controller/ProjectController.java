@@ -3,6 +3,7 @@ package com.sdlcassist.controller;
 import com.sdlcassist.dto.PrdRequest;
 import com.sdlcassist.dto.ProjectRequest;
 import com.sdlcassist.dto.ProjectResponse;
+import com.sdlcassist.dto.TemplateSelectionRequest;
 import com.sdlcassist.model.Project;
 import com.sdlcassist.model.User;
 import com.sdlcassist.service.ProjectService;
@@ -59,6 +60,13 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> savePrd(@PathVariable UUID id,
             @RequestBody PrdRequest request) {
         Project project = projectService.savePrd(id, request.getContent());
+        return ResponseEntity.ok(ProjectResponse.from(project));
+    }
+
+    @PutMapping("/{id}/template")
+    public ResponseEntity<ProjectResponse> selectTemplate(@PathVariable UUID id,
+            @Valid @RequestBody TemplateSelectionRequest request) {
+        Project project = projectService.selectTemplate(id, request.getTemplateId());
         return ResponseEntity.ok(ProjectResponse.from(project));
     }
 

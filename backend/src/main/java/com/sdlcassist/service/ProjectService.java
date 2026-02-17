@@ -61,6 +61,13 @@ public class ProjectService {
     }
 
     @Transactional
+    public Project selectTemplate(UUID id, String templateId) {
+        Project project = findById(id);
+        project.setSelectedTemplateId(templateId);
+        return projectRepository.save(project);
+    }
+
+    @Transactional
     public void delete(UUID id) {
         Project project = findById(id);
         projectRepository.delete(project);

@@ -28,6 +28,25 @@ export const routes: Routes = [
                 canDeactivate: [unsavedChangesGuard]
             },
             {
+                path: 'design',
+                loadComponent: () => import('./features/project/design-phase/design-layout.component').then(m => m.DesignLayoutComponent),
+                children: [
+                    {
+                        path: 'ux-design',
+                        loadComponent: () => import('./features/project/design-phase/ux-design/ux-design.component').then(m => m.UxDesignComponent)
+                    },
+                    {
+                        path: 'technical-design',
+                        loadComponent: () => import('./features/project/design-phase/technical-design/technical-design.component').then(m => m.TechnicalDesignComponent)
+                    },
+                    {
+                        path: '',
+                        redirectTo: 'ux-design',
+                        pathMatch: 'full'
+                    }
+                ]
+            },
+            {
                 path: '',
                 redirectTo: 'planning',
                 pathMatch: 'full'

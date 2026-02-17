@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "templates": [
+    {
+      "id": "shadcn-template",
+      "name": "Basic Design System",
+      "tag": "Clean Enterprise",
+      "description": "Neutral shadcn-inspired layout with left sidebar, data tables, and cards. Professional and information-dense.",
+      "thumbnail": "assets/templates/shadcn-template/thumbnail.png",
+      "preview":   "assets/templates/shadcn-template/preview.png",
+      "metadata":  "assets/templates/shadcn-template/metadata.json"
+    },
+    {
+      "id": "nitro-basic",
+      "name": "Nitro Basic",
+      "tag": "Vibrant Modern",
+      "description": "Bold, colorful design system with gradient accents, elevated shadows, and high-energy blue primary. Modern SaaS aesthetic with personality.",
+      "thumbnail": "assets/templates/nitro-basic/thumbnail.png",
+      "preview":   "assets/templates/nitro-basic/preview.png",
+      "metadata":  "assets/templates/nitro-basic/metadata.json"
+    }
+  ]
+}

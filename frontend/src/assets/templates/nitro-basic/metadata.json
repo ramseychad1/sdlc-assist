@@ -1,0 +1,72 @@
+{
+  "id": "nitro-basic",
+  "name": "Nitro Basic",
+  "tag": "Vibrant Modern",
+  "description": "Bold, colorful design system with gradient accents, elevated shadows, and high-energy blue primary. Modern SaaS aesthetic with personality.",
+  "source": "Nitro_Basic.pen",
+  "designTokens": {
+    "background":           "#F5F5F5",
+    "foreground":           "#333333",
+    "card":                 "#FFFFFF",
+    "primary":              "#0F5FFE",
+    "primaryForeground":    "#FFFFFF",
+    "secondary":            "#F2F3F0",
+    "secondaryForeground":  "#111111",
+    "muted":                "#F2F3F0",
+    "mutedForeground":      "#5B5F66",
+    "accent":               "#F2F3F0",
+    "border":               "#E1E2E5",
+    "destructive":          "#A62911",
+    "success":              "#DDF0C9",
+    "successForeground":    "#1A3300",
+    "info":                 "#C9D6F0",
+    "infoForeground":       "#001133",
+    "warning":              "#F5E6D7",
+    "warningForeground":    "#663300",
+    "error":                "#F5D7F3",
+    "errorForeground":      "#66005E",
+    "sidebar":              "#FFFFFF",
+    "sidebarBorder":        "#E1E2E5",
+    "borderRadius":         "8px",
+    "fontFamily":           "Inter, -apple-system, sans-serif",
+    "fontScale":            "standard"
+  },
+  "themes": {
+    "modes": ["Light", "Dark"]
+  },
+  "components": [
+    "Sidebar", "Progress", "Radio", "Tooltip", "Switch", "Textarea",
+    "Input", "Select", "Dropdown", "Accordion", "Alert", "Label",
+    "Avatar", "Breadcrumb", "Button", "IconButton", "Card", "Dialog",
+    "Tab", "Checkbox", "Combobox", "Pagination", "DataTable", "Table"
+  ],
+  "layoutPattern": "sidebar-left-fixed",
+  "componentStyle": "nitro-modern",
+  "density": "comfortable",
+  "colorMood": "vibrant-energetic",
+  "dashboardExamples": [
+    "dashboard-football",
+    "dashboard-revenue",
+    "dashboard-utility"
+  ],
+  "keyPatterns": [
+    "Vibrant blue primary (#0F5FFE) with gradient variations",
+    "280px fixed left sidebar with white background",
+    "Elevated box shadows on cards and buttons for depth",
+    "8px border radius on all components (vs 6px in shadcn)",
+    "Gradient logo and avatar backgrounds (primary → purple)",
+    "Success/Info/Warning/Error color system with pastel backgrounds",
+    "Bold stat values (font-weight: 800) with large type (32px)",
+    "Phase progress with blue glow effect on active state",
+    "Colored section headers using primary blue",
+    "Hover states with shadow lift animations"
+  ],
+  "avoidPatterns": [
+    "Monochrome or grayscale palettes",
+    "Flat design without depth or shadows",
+    "Muted or desaturated accent colors",
+    "Thin font weights (below 400)",
+    "Subtle borders that disappear on white backgrounds"
+  ],
+  "promptHint": "Generate a design system with a vibrant, modern SaaS aesthetic. Use a bold blue primary (#0F5FFE) as the hero color with gradient overlays (primary → #7B3FFF on avatars, primary → #0845C7 on logos). Apply elevated box-shadows liberally: 0 1px 3px rgba(0,0,0,0.04) on cards, 0 2px 6px rgba(15,95,254,0.4) on primary buttons. Use Inter as the typeface with 14px body text and bold 800-weight stat values. The sidebar is 280px with white background and subtle right border. Apply 8px border-radius to all components. Phase progress uses a blue glow (box-shadow: 0 0 0 4px rgba(15,95,254,0.1)) on the active step. Section titles and interactive elements use the primary blue for color accents. Include semantic color system: success (light green #DDF0C9), info (light blue #C9D6F0), warning (light orange #F5E6D7), error (light pink #F5D7F3) all with dark foreground text. This design prioritizes energy, approachability, and modern polish over minimalism."
+}

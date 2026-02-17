@@ -1,7 +1,8 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { SidebarComponent } from '../../shared/components/sidebar.component';
 import { HeaderComponent, Breadcrumb } from '../../shared/components/header.component';
@@ -13,6 +14,7 @@ interface SdlcPhase {
     label: string;
     route: string;
     enabled: boolean;
+    tooltip?: string;
 }
 
 @Component({
@@ -43,14 +45,17 @@ interface SdlcPhase {
             </div>
 
             <div class="tabs">
-              @for (phase of phases; track phase.label) {
+              @for (phase of phases(); track phase.label) {
                 @if (phase.enabled) {
-                  <button class="tab active">
+                  <button
+                    class="tab"
+                    [class.active]="isActivePhase(phase.route)"
+                    (click)="navigateToPhase(phase.route)">
                     {{ phase.label }}
                   </button>
                 } @else {
                   <button class="tab disabled"
-                          title="Coming Soon"
+                          [title]="phase.tooltip || 'Coming Soon'"
                           disabled>
                     <lucide-icon name="lock" [size]="14"></lucide-icon>
                     {{ phase.label }}
@@ -66,6 +71,20 @@ interface SdlcPhase {
               </div>
               <div class="progress-bar">
                 <div class="progress-fill" [style.width.%]="progressPercent()"></div>
+              </div>
+              <div class="progress-steps">
+                @for (phase of phases(); track phase.route; let i = $index) {
+                  <div class="progress-step"
+                       [class.active]="isPhaseActive(phase)"
+                       [class.done]="isPhaseDone(phase)"
+                       [title]="phase.label">
+                    @if (isPhaseDone(phase)) {
+                      <lucide-icon name="check" [size]="12"></lucide-icon>
+                    } @else {
+                      <span class="step-number">{{ i + 1 }}</span>
+                    }
+                  </div>
+                }
               </div>
             </div>
 
@@ -166,6 +185,45 @@ interface SdlcPhase {
       border-radius: var(--radius-full);
       transition: width 0.3s ease;
     }
+
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding: 0 2px;
+    }
+
+    .progress-step {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--muted);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      transition: all 0.2s ease;
+    }
+
+    .progress-step .step-number {
+      line-height: 1;
+    }
+
+    .progress-step.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+    }
+
+    .progress-step.done {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
   `],
 })
 export class ProjectLayoutComponent implements OnInit {
@@ -173,16 +231,10 @@ export class ProjectLayoutComponent implements OnInit {
     projects = signal<Project[]>([]);
     breadcrumbs = signal<Breadcrumb[]>([]);
     progressPercent = signal(20);
+    activePhase = signal<string>('planning');
+    phases = signal<SdlcPhase[]>([]);
 
     private destroyRef = inject(DestroyRef);
-
-    phases: SdlcPhase[] = [
-        { label: 'Planning & Analysis', route: 'planning', enabled: true },
-        { label: 'Design', route: 'design', enabled: false },
-        { label: 'Implementation', route: 'implementation', enabled: false },
-        { label: 'Testing & Integration', route: 'testing', enabled: false },
-        { label: 'Maintenance', route: 'maintenance', enabled: false },
-    ];
 
     constructor(
         private route: ActivatedRoute,
@@ -202,12 +254,25 @@ export class ProjectLayoutComponent implements OnInit {
         this.projectService.getAll().subscribe({
             next: (projects) => this.projects.set(projects),
         });
+
+        // Track active phase based on route
+        this.router.events.pipe(
+            filter(event => event instanceof NavigationEnd),
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() => {
+            this.updateActivePhase();
+        });
+
+        // Set initial active phase
+        this.updateActivePhase();
     }
 
     private loadProject(projectId: string): void {
         this.projectService.getById(projectId).subscribe({
             next: (project) => {
                 this.project.set(project);
+                this.updatePhases(project);
+                this.updateProgress(project);
                 this.breadcrumbs.set([
                     { label: 'Projects', route: '/dashboard' },
                     { label: project.name },
@@ -217,7 +282,84 @@ export class ProjectLayoutComponent implements OnInit {
         });
     }
 
+    private updatePhases(project: Project): void {
+        const hasPrd = !!project.prdContent && project.prdContent.trim().length > 0;
+
+        this.phases.set([
+            { label: 'Planning & Analysis', route: 'planning', enabled: true },
+            {
+                label: 'Design',
+                route: 'design',
+                enabled: hasPrd,
+                tooltip: hasPrd ? undefined : 'Complete Planning & Analysis first'
+            },
+            { label: 'Implementation', route: 'implementation', enabled: false },
+            { label: 'Testing & Integration', route: 'testing', enabled: false },
+            { label: 'Maintenance', route: 'maintenance', enabled: false },
+        ]);
+    }
+
+    private updateProgress(project: Project): void {
+        let completedPhases = 0;
+        const totalPhases = 5;
+
+        // Phase 1: Planning & Analysis - complete when PRD exists
+        if (project.prdContent && project.prdContent.trim().length > 0) {
+            completedPhases++;
+        }
+
+        // Phase 2: Design - complete when template is selected
+        if (project.selectedTemplateId) {
+            completedPhases++;
+        }
+
+        // Calculate percentage (each phase is 20%)
+        const percent = (completedPhases / totalPhases) * 100;
+        this.progressPercent.set(Math.round(percent));
+    }
+
     onProjectSelect(project: Project): void {
         this.router.navigate(['/projects', project.id, 'planning']);
+    }
+
+    navigateToPhase(route: string): void {
+        const projectId = this.project()?.id;
+        if (projectId) {
+            this.router.navigate(['/projects', projectId, route]);
+        }
+    }
+
+    isActivePhase(route: string): boolean {
+        return this.activePhase() === route;
+    }
+
+    private updateActivePhase(): void {
+        const url = this.router.url;
+        const phase = this.phases().find(p => url.includes(`/${p.route}`));
+        if (phase) {
+            this.activePhase.set(phase.route);
+        }
+    }
+
+    isPhaseActive(phase: SdlcPhase): boolean {
+        return this.activePhase() === phase.route;
+    }
+
+    isPhaseDone(phase: SdlcPhase): boolean {
+        const project = this.project();
+        if (!project) return false;
+
+        // Planning & Analysis is done when PRD is complete
+        if (phase.route === 'planning') {
+            return !!project.prdContent && project.prdContent.trim().length > 0;
+        }
+
+        // Design is done when template is selected
+        if (phase.route === 'design') {
+            return !!project.selectedTemplateId;
+        }
+
+        // Other phases not yet implemented
+        return false;
     }
 }

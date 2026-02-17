@@ -10,6 +10,7 @@ import {
   Lock, Save, Upload, Sparkles, Check, X,
   RefreshCw, Loader, FileText, File, FilePlus, Download, Printer,
   Users, Shield, Mail, Square,
+  AlertCircle, PackageOpen, Palette, Blocks, CheckCircle,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -21,6 +22,7 @@ const icons = {
   Lock, Save, Upload, Sparkles, Check, X,
   RefreshCw, Loader, FileText, File, FilePlus, Download, Printer,
   Users, Shield, Mail, Square,
+  AlertCircle, PackageOpen, Palette, Blocks, CheckCircle,
 };
 
 export const appConfig: ApplicationConfig = {
