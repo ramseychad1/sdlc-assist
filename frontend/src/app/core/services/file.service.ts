@@ -46,6 +46,14 @@ export class FileService {
         );
     }
 
+    analyzeWithGemini(projectId: string): Observable<AiAnalysisResponse> {
+        return this.http.post<AiAnalysisResponse>(
+            `${environment.apiUrl}/projects/${projectId}/analyze/gemini`,
+            {},
+            { withCredentials: true }
+        );
+    }
+
     analyzeStream(projectId: string): Observable<string> {
         return new Observable((subscriber: Subscriber<string>) => {
             const url = `${environment.apiUrl}/projects/${projectId}/analyze/stream`;

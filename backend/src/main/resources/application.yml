@@ -51,6 +51,11 @@ spring:
 
 app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200}
+  vertexai:
+    project-id: ${VERTEXAI_PROJECT_ID:sdlc-assist}
+    location: ${VERTEXAI_LOCATION:us-central1}
+    agent-resource-id: ${VERTEXAI_AGENT_RESOURCE_ID:2165724545904803840}
+    service-account-json: ${GOOGLE_SERVICE_ACCOUNT_JSON:}
   anthropic:
     api-key: ${ANTHROPIC_API_KEY:}
     model: claude-sonnet-4-5-20250929

@@ -39,9 +39,20 @@ import { marked } from 'marked';
           } @else {
             <button class="btn btn-primary"
                     (click)="triggerAnalysis()"
-                    [disabled]="uploadedFiles().length === 0">
+                    [disabled]="uploadedFiles().length === 0 || geminiAnalyzing()">
               <lucide-icon name="sparkles" [size]="16"></lucide-icon>
-              Analyze with AI
+              Generate with Claude
+            </button>
+            <button class="btn btn-outline btn-gemini"
+                    (click)="triggerGeminiAnalysis()"
+                    [disabled]="uploadedFiles().length === 0 || analyzing()">
+              @if (geminiAnalyzing()) {
+                <lucide-icon name="loader" [size]="16" class="spin"></lucide-icon>
+                Gemini Processing...
+              } @else {
+                <lucide-icon name="cpu" [size]="16"></lucide-icon>
+                Generate with Gemini
+              }
             </button>
           }
         </div>
@@ -79,6 +90,16 @@ import { marked } from 'marked';
         <div class="processing-card">
           <lucide-icon name="loader" [size]="20" class="spin"></lucide-icon>
           <span>Uploading files...</span>
+        </div>
+      }
+
+      <!-- Gemini Progress (batch, non-streaming) -->
+      @if (geminiAnalyzing()) {
+        <div class="gemini-progress">
+          <div class="gemini-progress-bar">
+            <div class="gemini-progress-fill" [style.width.%]="geminiProgress()"></div>
+          </div>
+          <p class="gemini-progress-message">{{ geminiProgressMessage() }}</p>
         </div>
       }
 
@@ -630,6 +651,49 @@ import { marked } from 'marked';
       padding: 40px;
       color: var(--muted-foreground);
     }
+
+    .btn-gemini {
+      border-color: #4285f4;
+      color: #4285f4;
+    }
+
+    .btn-gemini:hover:not(:disabled) {
+      background: rgba(66, 133, 244, 0.08);
+    }
+
+    .btn-gemini:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .gemini-progress {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--muted);
+      border-radius: 8px;
+    }
+
+    .gemini-progress-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .gemini-progress-fill {
+      height: 100%;
+      background: #4285f4;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .gemini-progress-message {
+      font-size: 13px;
+      color: var(--muted-foreground);
+      margin: 0;
+    }
   `,
     ],
 })
@@ -644,6 +708,9 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     uploading = signal(false);
     analyzing = signal(false);
     aiResult = signal<string | null>(null);
+    geminiAnalyzing = signal(false);
+    geminiProgress = signal(0);
+    geminiProgressMessage = signal('Initializing...');
 
     fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
     resultContent = viewChild<ElementRef<HTMLDivElement>>('resultContent');
@@ -693,6 +760,9 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         this.uploading.set(false);
         this.analyzing.set(false);
         this.aiResult.set(null);
+        this.geminiAnalyzing.set(false);
+        this.geminiProgress.set(0);
+        this.geminiProgressMessage.set('Initializing...');
     }
 
     private loadProject(): void {
@@ -789,6 +859,48 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         if (this.aiResult()) {
             this.snackBar.open('Analysis stopped — partial result shown', 'Close', { duration: 3000 });
         }
+    }
+
+    triggerGeminiAnalysis(): void {
+        this.geminiAnalyzing.set(true);
+        this.geminiProgress.set(0);
+        this.geminiProgressMessage.set('Sending documents to Gemini...');
+        this.aiResult.set(null);
+        this.editing.set(false);
+        this.editingAiResult.set(false);
+
+        const steps = [
+            { pct: 15, msg: 'Analyzing uploaded documents...' },
+            { pct: 35, msg: 'Identifying key requirements...' },
+            { pct: 55, msg: 'Structuring PRD sections...' },
+            { pct: 75, msg: 'Generating functional requirements...' },
+            { pct: 85, msg: 'Finalizing document...' },
+        ];
+        let stepIdx = 0;
+        const interval = setInterval(() => {
+            if (!this.geminiAnalyzing()) { clearInterval(interval); return; }
+            if (stepIdx < steps.length) {
+                this.geminiProgress.set(steps[stepIdx].pct);
+                this.geminiProgressMessage.set(steps[stepIdx].msg);
+                stepIdx++;
+            }
+        }, 3000);
+
+        this.fileService.analyzeWithGemini(this.projectId).subscribe({
+            next: response => {
+                clearInterval(interval);
+                this.geminiProgress.set(100);
+                this.geminiProgressMessage.set('Complete!');
+                this.aiResult.set(response.content);
+                this.geminiAnalyzing.set(false);
+            },
+            error: () => {
+                clearInterval(interval);
+                this.geminiAnalyzing.set(false);
+                this.geminiProgress.set(0);
+                this.snackBar.open('Gemini generation failed. Check backend logs.', 'Close', { duration: 4000 });
+            },
+        });
     }
 
     saveAiResultAsPrd(): void {

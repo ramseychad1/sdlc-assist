@@ -5,6 +5,7 @@ import com.sdlcassist.dto.FileResponse;
 import com.sdlcassist.model.ProjectFile;
 import com.sdlcassist.service.AiService;
 import com.sdlcassist.service.FileService;
+import com.sdlcassist.service.VertexAIService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -27,6 +28,7 @@ public class FileController {
 
     private final FileService fileService;
     private final AiService aiService;
+    private final VertexAIService vertexAIService;
 
     private final ExecutorService streamExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -67,6 +69,12 @@ public class FileController {
     @PostMapping("/analyze")
     public ResponseEntity<AiAnalysisResponse> analyzeRequirements(@PathVariable UUID projectId) {
         String content = aiService.analyzeRequirements(projectId);
+        return ResponseEntity.ok(AiAnalysisResponse.builder().content(content).build());
+    }
+
+    @PostMapping("/analyze/gemini")
+    public ResponseEntity<AiAnalysisResponse> analyzeWithGemini(@PathVariable UUID projectId) {
+        String content = vertexAIService.analyzeRequirements(projectId);
         return ResponseEntity.ok(AiAnalysisResponse.builder().content(content).build());
     }
 
