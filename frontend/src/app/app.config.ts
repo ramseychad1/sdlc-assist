@@ -11,6 +11,7 @@ import {
   RefreshCw, Loader, FileText, File, FilePlus, Download, Printer,
   Users, Shield, Mail, Square,
   AlertCircle, PackageOpen, Palette, Blocks, CheckCircle,
+  Cpu,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -23,6 +24,7 @@ const icons = {
   RefreshCw, Loader, FileText, File, FilePlus, Download, Printer,
   Users, Shield, Mail, Square,
   AlertCircle, PackageOpen, Palette, Blocks, CheckCircle,
+  Cpu,
 };
 
 export const appConfig: ApplicationConfig = {
