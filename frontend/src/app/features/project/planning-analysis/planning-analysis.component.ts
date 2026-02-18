@@ -145,26 +145,25 @@ import { marked } from 'marked';
                 }
               </h4>
               <div class="ai-result-actions">
-                <button class="btn btn-primary btn-sm" (click)="saveAiResultAsPrd()" [disabled]="savingPrd()">
-                  <lucide-icon name="save" [size]="14"></lucide-icon>
-                  @if (savingPrd()) { Saving... } @else { Save PRD }
-                </button>
-                <button class="btn btn-outline btn-sm" (click)="downloadAiResult()">
-                  <lucide-icon name="download" [size]="14"></lucide-icon>
-                  Download .md
-                </button>
-                <button class="btn btn-outline btn-sm" (click)="editAiResultBeforeSave()">
-                  <lucide-icon name="pencil" [size]="14"></lucide-icon>
-                  Edit
-                </button>
-                <button class="btn btn-outline btn-sm" (click)="triggerAnalysis()">
-                  <lucide-icon name="refresh-cw" [size]="14"></lucide-icon>
-                  Regenerate
-                </button>
-                <button class="btn btn-ghost btn-sm" (click)="dismissAiResult()">
-                  <lucide-icon name="x" [size]="14"></lucide-icon>
-                  Dismiss
-                </button>
+                @if (!editingAiResult()) {
+                  <button class="btn btn-outline btn-sm" (click)="downloadAiResult()">
+                    <lucide-icon name="download" [size]="14"></lucide-icon>
+                    Download .md
+                  </button>
+                  <button class="btn btn-outline btn-sm" (click)="triggerAnalysis()">
+                    <lucide-icon name="refresh-cw" [size]="14"></lucide-icon>
+                    Regenerate
+                  </button>
+                  <button class="btn btn-ghost btn-sm" (click)="dismissAiResult()">
+                    <lucide-icon name="x" [size]="14"></lucide-icon>
+                    Dismiss
+                  </button>
+                } @else {
+                  <button class="btn btn-outline btn-sm" (click)="cancelEditAiResult()">
+                    <lucide-icon name="x" [size]="14"></lucide-icon>
+                    Cancel
+                  </button>
+                }
               </div>
             }
           </div>
@@ -173,6 +172,18 @@ import { marked } from 'marked';
               <textarea class="prd-textarea"
                         [ngModel]="aiResult()"
                         (ngModelChange)="aiResult.set($event)"></textarea>
+            </div>
+            <div class="ai-save-bar">
+              <span class="unsaved-notice">
+                <lucide-icon name="alert-circle" [size]="14"></lucide-icon>
+                Not saved to database yet
+              </span>
+              <button class="btn btn-save-prominent"
+                      (click)="saveAiResultAsPrd()"
+                      [disabled]="savingPrd()">
+                <lucide-icon name="save" [size]="16"></lucide-icon>
+                @if (savingPrd()) { Saving... } @else { Save PRD }
+              </button>
             </div>
           } @else {
             <div class="ai-result-content" #resultContent>
@@ -669,6 +680,47 @@ import { marked } from 'marked';
       color: var(--muted-foreground);
     }
 
+    .ai-save-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: color-mix(in srgb, var(--primary) 6%, var(--background));
+      border-top: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+    }
+
+    .unsaved-notice {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted-foreground);
+    }
+
+    .btn-save-prominent {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-save-prominent:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    .btn-save-prominent:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .source-badge {
       display: inline-flex;
       align-items: center;
@@ -893,6 +945,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
             },
             complete: () => {
                 this.analyzing.set(false);
+                this.editingAiResult.set(true);
             },
         });
     }
@@ -945,6 +998,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
                 queueMicrotask(() => {
                     this.aiResultSource.set('gemini');
                     this.aiResult.set(response.content);
+                    this.editingAiResult.set(true);
                 });
             },
             error: () => {
@@ -978,6 +1032,10 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
 
     editAiResultBeforeSave(): void {
         this.editingAiResult.set(true);
+    }
+
+    cancelEditAiResult(): void {
+        this.editingAiResult.set(false);
     }
 
     dismissAiResult(): void {
