@@ -9,9 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -145,30 +143,56 @@ public class VertexAIService {
             throw new RuntimeException("Vertex AI streamQuery error " + response.statusCode() + ": " + errorBody);
         }
 
-        // Read SSE stream and collect all text parts
+        // Read the full response body first so we can inspect the format
+        String rawBody = new String(response.body().readAllBytes(), StandardCharsets.UTF_8);
+        log.info("streamQuery raw body ({} chars): {}", rawBody.length(),
+                rawBody.length() > 2000 ? rawBody.substring(0, 2000) + "...[truncated]" : rawBody);
+
         StringBuilder result = new StringBuilder();
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
+        // Try SSE format first (lines starting with "data: ")
+        boolean hasSseLines = rawBody.lines().anyMatch(l -> l.startsWith("data: "));
+        if (hasSseLines) {
+            for (String line : rawBody.lines().toList()) {
                 if (!line.startsWith("data: ")) continue;
                 String data = line.substring(6).trim();
                 if (data.isEmpty() || data.equals("[DONE]")) continue;
-
                 try {
                     String text = extractTextFromEvent(data);
-                    if (text != null && !text.isEmpty()) {
-                        result.append(text);
-                    }
+                    if (text != null && !text.isEmpty()) result.append(text);
                 } catch (Exception parseEx) {
-                    log.debug("Skipping unparseable SSE line: {}", data);
+                    log.warn("Skipping unparseable SSE line: {}", data);
+                }
+            }
+        } else {
+            // Not SSE — try as raw JSON (single object or array)
+            try {
+                JsonNode root = objectMapper.readTree(rawBody);
+                if (root.isArray()) {
+                    // NDJSON-as-array: parse each element
+                    for (JsonNode element : root) {
+                        String text = extractTextFromEvent(element.toString());
+                        if (text != null && !text.isEmpty()) result.append(text);
+                    }
+                } else {
+                    // Single JSON object
+                    String text = extractTextFromEvent(rawBody);
+                    if (text != null && !text.isEmpty()) result.append(text);
+                }
+            } catch (Exception jsonEx) {
+                // Try NDJSON (one JSON object per line, no "data:" prefix)
+                for (String line : rawBody.lines().toList()) {
+                    if (line.isBlank()) continue;
+                    try {
+                        String text = extractTextFromEvent(line);
+                        if (text != null && !text.isEmpty()) result.append(text);
+                    } catch (Exception ignored) {}
                 }
             }
         }
 
         if (result.isEmpty()) {
-            log.warn("streamQuery returned no text — check raw SSE events in DEBUG logs");
+            log.warn("streamQuery returned no text — see raw body logged above");
         }
         return result.toString();
     }
@@ -177,13 +201,12 @@ public class VertexAIService {
     // Parse a single SSE event from the agent and extract any text content
     // -------------------------------------------------------------------------
     private String extractTextFromEvent(String data) throws Exception {
-        log.debug("SSE event: {}", data);
+        log.info("SSE event: {}", data);
         JsonNode root = objectMapper.readTree(data);
 
         // Shape 1: {"output": {"content": {"parts": [{"text": "..."}]}}}
         JsonNode output = root.path("output");
         if (!output.isMissingNode()) {
-            // Direct text output
             if (output.isTextual()) return output.asText();
 
             JsonNode content = output.path("content");
@@ -194,7 +217,7 @@ public class VertexAIService {
                     for (JsonNode part : parts) {
                         if (part.has("text")) sb.append(part.get("text").asText());
                     }
-                    return sb.toString();
+                    if (!sb.isEmpty()) return sb.toString();
                 }
                 if (content.isTextual()) return content.asText();
             }
@@ -203,9 +226,39 @@ public class VertexAIService {
             if (output.has("text")) return output.get("text").asText();
         }
 
-        // Shape 3: top-level text
+        // Shape 3: ADK direct — {"content": {"parts": [{"text": "..."}], "role": "model"}}
+        JsonNode content = root.path("content");
+        if (!content.isMissingNode()) {
+            JsonNode parts = content.path("parts");
+            if (parts.isArray()) {
+                StringBuilder sb = new StringBuilder();
+                for (JsonNode part : parts) {
+                    if (part.has("text")) sb.append(part.get("text").asText());
+                }
+                if (!sb.isEmpty()) return sb.toString();
+            }
+            if (content.isTextual()) return content.asText();
+        }
+
+        // Shape 4: Vertex AI candidates — {"candidates": [{"content": {"parts": [{"text": "..."}]}}]}
+        JsonNode candidates = root.path("candidates");
+        if (candidates.isArray() && !candidates.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (JsonNode candidate : candidates) {
+                JsonNode cParts = candidate.path("content").path("parts");
+                if (cParts.isArray()) {
+                    for (JsonNode part : cParts) {
+                        if (part.has("text")) sb.append(part.get("text").asText());
+                    }
+                }
+            }
+            if (!sb.isEmpty()) return sb.toString();
+        }
+
+        // Shape 5: top-level text
         if (root.has("text")) return root.get("text").asText();
 
+        log.warn("SSE event shape not recognized: {}", data);
         return null;
     }
 

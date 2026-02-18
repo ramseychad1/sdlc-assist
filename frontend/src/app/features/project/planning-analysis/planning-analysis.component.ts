@@ -990,9 +990,16 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         this.fileService.analyzeWithGemini(this.projectId).subscribe({
             next: response => {
                 clearInterval(interval);
+                this.geminiAnalyzing.set(false);
+
+                if (!response.content || response.content.trim() === '') {
+                    this.geminiProgress.set(0);
+                    this.snackBar.open('Gemini returned empty content — check backend logs for SSE event shape.', 'Close', { duration: 6000 });
+                    return;
+                }
+
                 this.geminiProgress.set(100);
                 this.geminiProgressMessage.set('Complete!');
-                this.geminiAnalyzing.set(false);
                 // Use queueMicrotask to guarantee the null → new-value transition
                 // renders even when content is identical to a previous result
                 queueMicrotask(() => {
