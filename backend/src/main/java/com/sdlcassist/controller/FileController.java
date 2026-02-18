@@ -83,6 +83,21 @@ public class FileController {
         response.setHeader("X-Accel-Buffering", "no");
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         SseEmitter emitter = new SseEmitter(300_000L);
+
+        emitter.onTimeout(() -> {
+            try {
+                emitter.send(SseEmitter.event().name("error").data("Stream timed out after 5 minutes"));
+            } catch (Exception ignored) {}
+            emitter.complete();
+        });
+
+        emitter.onError(ex -> {
+            try {
+                emitter.send(SseEmitter.event().name("error").data("Stream error: " + ex.getMessage()));
+            } catch (Exception ignored) {}
+            emitter.complete();
+        });
+
         streamExecutor.execute(() -> aiService.streamAnalysis(projectId, emitter));
         return emitter;
     }
