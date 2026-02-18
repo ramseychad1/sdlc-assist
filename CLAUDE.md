@@ -16,7 +16,7 @@ All implementation work must align with these documents. When in doubt, re-read 
 
 ## Project Overview
 
-SDLC Assist is an AI-assisted SDLC web application. Users create projects and work through structured software development lifecycle phases, starting with Planning & Analysis (requirements gathering). AI features (Anthropic Claude integration) are planned for Phase 2; Phase 1 is the core foundation with auth, project CRUD, and requirements sections.
+SDLC Assist is an AI-assisted SDLC web application. Users create projects and work through structured software development lifecycle phases. The Planning & Analysis phase uses AI (Claude streaming or Gemini batch) to generate a Product Requirements Document (PRD) from uploaded planning documents.
 
 ## Architecture
 
@@ -27,19 +27,20 @@ Monorepo with three top-level components:
 - **`supabase/`** — SQL migrations for Supabase-hosted PostgreSQL.
 
 ### Backend Structure (`com.sdlcassist`)
-- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`, `PUT /api/projects/{id}/prd`), `SectionController` (`/api/projects/{id}/sections`)
-- `service/` — Business logic: `UserService` (implements `UserDetailsService`), `ProjectService` (includes `savePrd()`), `SectionService`
-- `model/` — JPA entities: `User` (roles: ADMIN, PRODUCT_MANAGER, VIEWER), `Project` (statuses: DRAFT, ACTIVE, COMPLETED, ARCHIVED; includes `prdContent`), `RequirementSection`
-- `dto/` — Request/response DTOs with Lombok builders (includes `PrdRequest`)
-- `config/` — `SecurityConfig` (endpoint security rules), `CorsConfig` (allows localhost:4200), `DataSeeder` (seeds initial data)
+- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`, `PUT /api/projects/{id}/prd`), `FileController` (`/api/projects/{id}/files`, `/analyze/stream`, `/analyze/gemini`), `SectionController`
+- `service/` — Business logic: `UserService`, `ProjectService` (includes `savePrd()`), `SectionService`, `AiService` (Claude SSE streaming), `VertexAIService` (Gemini batch via Vertex AI Agent Engine), `FileService` (upload, extract text), `PromptService`
+- `model/` — JPA entities: `User` (roles: ADMIN, PRODUCT_MANAGER, VIEWER), `Project` (statuses: DRAFT, ACTIVE, COMPLETED, ARCHIVED; includes `prdContent`), `RequirementSection`, `ProjectFile`
+- `dto/` — Request/response DTOs with Lombok builders (includes `PrdRequest`, `AiAnalysisResponse`)
+- `config/` — `SecurityConfig`, `CorsConfig`, `DataSeeder`
 
 ### Frontend Structure (`src/app/`)
-- `core/services/` — `AuthService`, `ProjectService`, `SectionService` (HttpClient-based)
+- `core/services/` — `AuthService`, `ProjectService`, `SectionService`, `FileService` (upload, `analyzeStream()` SSE, `analyzeWithGemini()`)
 - `core/models/` — TypeScript interfaces matching backend DTOs
-- `core/guards/` — `authGuard` for route protection
+- `core/guards/` — `authGuard`, `unsavedChangesGuard`
 - `features/login/` — Login page
 - `features/dashboard/` — Project list + create dialog
 - `features/project/` — Project layout with SDLC phase tabs and planning/analysis child route
+- `shared/pipes/` — `MarkdownPipe` (renders PRD markdown via `marked`)
 - Routes: `/login`, `/dashboard`, `/projects/:id/planning`
 
 ### Database
@@ -86,8 +87,12 @@ spring:
 Set these as Railway service env vars — do NOT put production credentials in code:
 - `DATABASE_URL` — JDBC PostgreSQL connection string
 - `DATABASE_USERNAME` / `DATABASE_PASSWORD` — DB credentials
-- `SPRING_PROFILES_ACTIVE=prod`
 - `ALLOWED_ORIGINS` — Frontend Railway domain (e.g. `https://frontend.railway.app`)
+- `ANTHROPIC_API_KEY` — Anthropic API key for Claude
+- `GOOGLE_SERVICE_ACCOUNT_JSON` — Full JSON content of GCP service account key (for Gemini)
+- `VERTEXAI_PROJECT_ID` — GCP project ID (default: `sdlc-assist`)
+- `VERTEXAI_LOCATION` — GCP region (default: `us-central1`)
+- `VERTEXAI_AGENT_RESOURCE_ID` — Vertex AI Reasoning Engine ID (default: `2165724545904803840`)
 - Frontend env var: `API_URL` — Backend internal URL (e.g. `http://sdlc-assist.railway.internal:8080`) — this is a **runtime** env var used by nginx, NOT a build arg
 
 ## Project Documentation Structure
@@ -121,35 +126,41 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - `CorsConfig` reads `ALLOWED_ORIGINS` env var (comma-separated); `SecurityConfig` injects the bean (do NOT instantiate `CorsConfig` manually)
 - **Backend private networking hostname**: `sdlc-assist.railway.internal:8080`
 
-## Current Status (as of 2026-02-15)
+## Current Status (as of 2026-02-18)
 
 ### Completed
 - Phase 1 core: auth, project CRUD, requirement sections API + UI
 - UI overhaul: shadcn/ui-inspired design with Inter font, Lucide icons, dark mode (ThemeService)
-- Railway deployment: both services deployed, nginx reverse proxy working, backend connected to Supabase DB
+- Railway deployment: both services live, nginx reverse proxy, backend on Supabase DB
 - Admin user management: create, delete, reset password (ADMIN role only, `/admin/users` route)
-- AI streaming analysis: upload docs, stream AI-generated PRD via SSE
-- **PRD workflow pivot**: AI-generated PRD is now the primary artifact of the Planning & Analysis phase. The 5 requirement sections are deprecated from the UI (backend retained). PRD is saved on the project entity (`prd_content` column) via `PUT /api/projects/{id}/prd`. Users can review, edit inline, save, or regenerate the PRD.
+- AI streaming PRD generation via Claude (SSE) with markdown rendering, inline editing, save, download, print-to-PDF
+- **PRD workflow**: AI-generated PRD is the primary artifact of Planning & Analysis. Saved on `projects.prd_content` via `PUT /api/projects/{id}/prd`
+- **Gemini integration**: Vertex AI Agent Engine (ADK Reasoning Engine) as second PRD generator. Two-step session API: `create_session` → `streamQuery`. Source badge (Claude/Gemini) shown on result. Auto-enters edit mode after generation with prominent Save bar.
+- **Supabase PgBouncer fix**: Added `prepareThreshold: 0` to Hikari datasource properties — fixes "prepared statement already exists" 500 errors caused by Supavisor transaction-mode pooling
+- **SSE stream reliability**: `SseEmitter` now has `onTimeout` + `onError` handlers — spinner always stops on timeout or error instead of hanging indefinitely
 
 ### In Progress
-- Railway deployment is live and functional
-- Next: Run `003_add_prd_content.sql` migration against Supabase before deploying PRD feature
+- Gemini SSE response parsing — backend logs raw response body at INFO level to diagnose actual ADK response shape; `extractTextFromEvent()` handles 5 common shapes
 
 ### TODO / Deferred
-- **Database object size limits**: The `prd_content` column is `TEXT` (unlimited in PostgreSQL), but large PRDs generated with high token limits (16K+) may need monitoring. Consider adding size constraints or pagination if storage/performance becomes an issue with many projects.
-- **Email invite on user creation**: Backend has `EmailService` with `@Async` + `spring-boot-starter-mail` + Gmail SMTP config. Works locally but **Railway blocks outbound SMTP (ports 587 and 465)**. To enable in production, switch to an HTTP-based email API (e.g. Resend) instead of SMTP. The frontend form, backend plumbing, and `email` column on `users` table are already in place — just need to swap the transport.
+- **Gemini response parsing**: `:streamQuery` returns 200 but zero text chunks — raw body logging added; need to confirm actual JSON shape from ADK agent and update `extractTextFromEvent()` accordingly
+- **Email invite on user creation**: Backend `EmailService` plumbing exists but **Railway blocks outbound SMTP**. Switch to HTTP-based provider (e.g. Resend) to enable in production.
+- **DB object size limits**: `prd_content` is TEXT (unbounded). Monitor if storage becomes an issue with many large PRDs.
 
 ### Railway Env Vars (current)
-- **Backend**: `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `ALLOWED_ORIGINS`, `MAIL_USERNAME`, `MAIL_PASSWORD` (no `SPRING_PROFILES_ACTIVE` — uses default profile)
-- **Frontend**: `API_URL=http://sdlc-assist.railway.internal:8080` (no `/api` suffix — nginx passes the full request path)
+- **Backend**: `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `ALLOWED_ORIGINS`, `ANTHROPIC_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `VERTEXAI_PROJECT_ID`, `VERTEXAI_LOCATION`, `VERTEXAI_AGENT_RESOURCE_ID` (no `SPRING_PROFILES_ACTIVE` — uses default profile)
+- **Frontend**: `API_URL=http://sdlc-assist.railway.internal:8080` (no `/api` suffix — nginx passes full request path)
 
 ### Known Issues & Gotchas
 - `LucideAngularModule.pick()` doesn't work in Angular 21 standalone imports — icons registered globally via `LUCIDE_ICONS` provider in `app.config.ts`
 - Shell escaping with `!` in DB password breaks `source .env` and `-D` JVM args — use `application-local.yml` instead
 - `SecurityConfig` must inject `CorsConfigurationSource` bean, not `new CorsConfig().corsConfigurationSource()` (causes NPE on `allowedOrigins`)
 - `Project.owner` is `FetchType.LAZY` — repository uses `LEFT JOIN FETCH` to avoid `LazyInitializationException`
-- **nginx + envsubst**: Do NOT use `${VAR}` syntax in nginx.conf templates — envsubst replaces ALL `$` patterns including nginx variables (`$proxy_host`, `$uri`). Use `__PLACEHOLDER__` syntax with `sed` instead.
+- **Supabase PgBouncer**: Transaction-mode pooling conflicts with Hibernate prepared statements. Fixed with `hikari.data-source-properties.prepareThreshold: 0` in `application.yml`. Do NOT remove this.
+- **SseEmitter must have onTimeout/onError handlers**: Without them, Spring silently closes the emitter on timeout and the frontend spinner hangs forever. Always register both handlers when creating `SseEmitter`.
+- **nginx + envsubst**: Do NOT use `${VAR}` syntax in nginx.conf templates — envsubst replaces nginx variables too. Use `__PLACEHOLDER__` syntax with `sed` instead.
 - **nginx + Railway IPv6 DNS**: Railway's internal DNS resolver is IPv6 (`fd12::10`). Must wrap in brackets `[fd12::10]` for nginx `resolver` directive.
-- **nginx variable proxy_pass**: When using a variable in `proxy_pass`, nginx passes the full original URI (no prefix stripping). Set `API_URL` to the backend root (no `/api` suffix) to avoid path doubling.
-- **GlobalExceptionHandler**: Was silently swallowing all unhandled exceptions. Added `log.error()` to the catch-all handler.
-- **Railway blocks outbound SMTP**: Both ports 587 (STARTTLS) and 465 (SMTPS) are blocked. Must use an HTTP-based email provider (e.g. Resend) for sending email from Railway.
+- **nginx variable proxy_pass**: When using a variable in `proxy_pass`, nginx passes the full original URI. Set `API_URL` to backend root (no `/api` suffix) to avoid path doubling.
+- **Railway blocks outbound SMTP**: Both ports 587 and 465 are blocked. Use an HTTP-based email provider (e.g. Resend).
+- **Vertex AI Agent Engine API (ADK 1.25+)**: Does NOT support a `query` class_method directly. Must use session-based flow: `POST :query` with `class_method: create_session` → `POST :streamQuery` with session_id + message.
+- **Gemini auth**: Local dev uses `GOOGLE_APPLICATION_CREDENTIALS` (file path to service account JSON). Railway uses `GOOGLE_SERVICE_ACCOUNT_JSON` (full JSON content as env var). Both handled in `VertexAIService.getAccessToken()`.
