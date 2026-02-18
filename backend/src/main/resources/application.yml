@@ -18,6 +18,8 @@ spring:
     hikari:
       maximum-pool-size: 3
       minimum-idle: 1
+      data-source-properties:
+        prepareThreshold: 0
 
   jpa:
     hibernate:
