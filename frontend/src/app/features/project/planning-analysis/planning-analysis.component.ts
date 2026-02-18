@@ -121,7 +121,7 @@ import { marked } from 'marked';
             @if (analyzing()) {
               <h4>
                 <lucide-icon name="loader" [size]="14" class="spin"></lucide-icon>
-                AI Generating...
+                Generating with Claude...
               </h4>
               <div class="ai-result-actions">
                 <button class="btn btn-destructive btn-sm" (click)="stopAnalysis()">
@@ -130,15 +130,32 @@ import { marked } from 'marked';
                 </button>
               </div>
             } @else {
-              <h4>Generated PRD</h4>
+              <h4>
+                Generated PRD
+                @if (aiResultSource() === 'claude') {
+                  <span class="source-badge source-claude">
+                    <lucide-icon name="sparkles" [size]="12"></lucide-icon>
+                    Claude
+                  </span>
+                } @else if (aiResultSource() === 'gemini') {
+                  <span class="source-badge source-gemini">
+                    <lucide-icon name="cpu" [size]="12"></lucide-icon>
+                    Gemini
+                  </span>
+                }
+              </h4>
               <div class="ai-result-actions">
-                <button class="btn btn-primary btn-sm" (click)="saveAiResultAsPrd()">
+                <button class="btn btn-primary btn-sm" (click)="saveAiResultAsPrd()" [disabled]="savingPrd()">
                   <lucide-icon name="save" [size]="14"></lucide-icon>
-                  Save PRD
+                  @if (savingPrd()) { Saving... } @else { Save PRD }
+                </button>
+                <button class="btn btn-outline btn-sm" (click)="downloadAiResult()">
+                  <lucide-icon name="download" [size]="14"></lucide-icon>
+                  Download .md
                 </button>
                 <button class="btn btn-outline btn-sm" (click)="editAiResultBeforeSave()">
                   <lucide-icon name="pencil" [size]="14"></lucide-icon>
-                  Edit Before Saving
+                  Edit
                 </button>
                 <button class="btn btn-outline btn-sm" (click)="triggerAnalysis()">
                   <lucide-icon name="refresh-cw" [size]="14"></lucide-icon>
@@ -652,6 +669,31 @@ import { marked } from 'marked';
       color: var(--muted-foreground);
     }
 
+    .source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      vertical-align: middle;
+      margin-left: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .source-claude {
+      background: rgba(139, 92, 246, 0.15);
+      color: #8b5cf6;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .source-gemini {
+      background: rgba(66, 133, 244, 0.12);
+      color: #4285f4;
+      border: 1px solid rgba(66, 133, 244, 0.3);
+    }
+
     .btn-gemini {
       border-color: #4285f4;
       color: #4285f4;
@@ -711,6 +753,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     geminiAnalyzing = signal(false);
     geminiProgress = signal(0);
     geminiProgressMessage = signal('Initializing...');
+    aiResultSource = signal<'claude' | 'gemini' | null>(null);
 
     fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
     resultContent = viewChild<ElementRef<HTMLDivElement>>('resultContent');
@@ -763,6 +806,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         this.geminiAnalyzing.set(false);
         this.geminiProgress.set(0);
         this.geminiProgressMessage.set('Initializing...');
+        this.aiResultSource.set(null);
     }
 
     private loadProject(): void {
@@ -824,6 +868,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         this.streamSubscription?.unsubscribe();
         this.analyzing.set(true);
         this.aiResult.set(null);
+        this.aiResultSource.set('claude');
         this.prdDraft.set('');
         this.editing.set(false);
         this.editingAiResult.set(false);
@@ -862,12 +907,15 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     }
 
     triggerGeminiAnalysis(): void {
+        // Clear previous result and source first so the UI resets visibly
+        this.aiResult.set(null);
+        this.aiResultSource.set(null);
+        this.editing.set(false);
+        this.editingAiResult.set(false);
+
         this.geminiAnalyzing.set(true);
         this.geminiProgress.set(0);
         this.geminiProgressMessage.set('Sending documents to Gemini...');
-        this.aiResult.set(null);
-        this.editing.set(false);
-        this.editingAiResult.set(false);
 
         const steps = [
             { pct: 15, msg: 'Analyzing uploaded documents...' },
@@ -891,8 +939,13 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
                 clearInterval(interval);
                 this.geminiProgress.set(100);
                 this.geminiProgressMessage.set('Complete!');
-                this.aiResult.set(response.content);
                 this.geminiAnalyzing.set(false);
+                // Use queueMicrotask to guarantee the null → new-value transition
+                // renders even when content is identical to a previous result
+                queueMicrotask(() => {
+                    this.aiResultSource.set('gemini');
+                    this.aiResult.set(response.content);
+                });
             },
             error: () => {
                 clearInterval(interval);
@@ -930,6 +983,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     dismissAiResult(): void {
         this.aiResult.set(null);
         this.editingAiResult.set(false);
+        this.aiResultSource.set(null);
     }
 
     editPrd(): void {
@@ -962,7 +1016,17 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     downloadMarkdown(): void {
         const content = this.prdContent();
         if (!content) return;
-        const slug = this.projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        this.triggerDownload(content, this.projectName);
+    }
+
+    downloadAiResult(): void {
+        const content = this.aiResult();
+        if (!content) return;
+        this.triggerDownload(content, this.projectName);
+    }
+
+    private triggerDownload(content: string, projectName: string): void {
+        const slug = projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         const filename = `${slug}-prd.md`;
         const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
