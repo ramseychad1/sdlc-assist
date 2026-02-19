@@ -56,6 +56,7 @@ app:
     location: ${VERTEXAI_LOCATION:us-central1}
     agent-resource-id: ${VERTEXAI_AGENT_RESOURCE_ID:2165724545904803840}
     design-system-agent-resource-id: ${VERTEXAI_DESIGN_SYSTEM_AGENT_RESOURCE_ID:1237279335224705024}
+    screen-extraction-agent-resource-id: ${VERTEXAI_SCREEN_EXTRACTION_AGENT_RESOURCE_ID:6375886510054440960}
     service-account-json: ${GOOGLE_SERVICE_ACCOUNT_JSON:}
   anthropic:
     api-key: ${ANTHROPIC_API_KEY:}

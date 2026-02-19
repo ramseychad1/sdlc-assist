@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Project, ProjectRequest } from '../models/project.model';
+import { ScreenDefinition } from '../models/screen-definition.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -42,5 +43,13 @@ export class ProjectService {
 
     delete(id: string): Observable<void> {
         return this.http.delete<void>(`${this.baseUrl}/${id}`, { withCredentials: true });
+    }
+
+    getScreens(projectId: string): Observable<ScreenDefinition[]> {
+        return this.http.get<ScreenDefinition[]>(`${this.baseUrl}/${projectId}/screens`, { withCredentials: true });
+    }
+
+    saveScreens(projectId: string, screens: ScreenDefinition[]): Observable<ScreenDefinition[]> {
+        return this.http.post<ScreenDefinition[]>(`${this.baseUrl}/${projectId}/screens`, screens, { withCredentials: true });
     }
 }

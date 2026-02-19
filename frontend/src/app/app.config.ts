@@ -12,6 +12,8 @@ import {
   Users, Shield, Mail, Square,
   AlertCircle, PackageOpen, Palette, Blocks, CheckCircle,
   Cpu,
+  ScanSearch, CircleCheck, CircleCheckBig, LoaderCircle,
+  Inbox, List, SquarePen, Settings, ChartBar, Wand, ArrowRight,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -25,6 +27,8 @@ const icons = {
   Users, Shield, Mail, Square,
   AlertCircle, PackageOpen, Palette, Blocks, CheckCircle,
   Cpu,
+  ScanSearch, CircleCheck, CircleCheckBig, LoaderCircle,
+  Inbox, List, SquarePen, Settings, ChartBar, Wand, ArrowRight,
 };
 
 export const appConfig: ApplicationConfig = {
