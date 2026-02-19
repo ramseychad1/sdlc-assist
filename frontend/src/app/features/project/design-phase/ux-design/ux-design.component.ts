@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { TemplateGalleryComponent } from '../template-gallery/template-gallery.component';
 import { UxDesignStepperComponent } from '../components/ux-design-stepper/ux-design-stepper.component';
+import { ProjectService } from '../../../../core/services/project.service';
 
 @Component({
   selector: 'app-ux-design',
@@ -9,7 +11,7 @@ import { UxDesignStepperComponent } from '../components/ux-design-stepper/ux-des
   imports: [CommonModule, TemplateGalleryComponent, UxDesignStepperComponent],
   template: `
     <div class="ux-design">
-      <app-ux-design-stepper [currentStep]="1"></app-ux-design-stepper>
+      <app-ux-design-stepper [currentStep]="1" [maxUnlockedStep]="maxUnlockedStep()"></app-ux-design-stepper>
 
       <div class="phase-header">
         <h2>Design Template Selection</h2>
@@ -49,4 +51,22 @@ import { UxDesignStepperComponent } from '../components/ux-design-stepper/ux-des
     }
   `]
 })
-export class UxDesignComponent {}
+export class UxDesignComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private projectService = inject(ProjectService);
+
+  maxUnlockedStep = signal(0);
+
+  ngOnInit(): void {
+    // route depth: template-selection -> ux-design -> projects/:id
+    const projectId = this.route.parent?.parent?.snapshot.paramMap.get('id');
+    if (!projectId) return;
+    this.projectService.getById(projectId).subscribe({
+      next: (project) => {
+        if (project.designSystemContent) {
+          this.maxUnlockedStep.set(2);
+        }
+      }
+    });
+  }
+}

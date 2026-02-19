@@ -20,11 +20,12 @@ const STEP_ROUTES: Record<number, string> = {
         <span class="stepper-percentage">{{ progressPercentage }}%</span>
       </div>
       <div class="stepper">
+        <!-- Step 1: Template Selection -->
         <div
           class="step"
           [class.completed]="currentStep >= 1"
           [class.active]="currentStep === 1"
-          [class.navigable]="currentStep > 1"
+          [class.navigable]="isNavigable(1)"
           (click)="navigateToStep(1)">
           <div class="step-dot">
             @if (currentStep > 1) {
@@ -35,15 +36,19 @@ const STEP_ROUTES: Record<number, string> = {
           </div>
           <span class="step-label">Template Selection</span>
         </div>
-        <div class="step-connector" [class.completed]="currentStep >= 2"></div>
+
+        <div class="step-connector" [class.completed]="currentStep >= 2 || isDoneAhead(2)"></div>
+
+        <!-- Step 2: Design System -->
         <div
           class="step"
-          [class.completed]="currentStep >= 2"
+          [class.completed]="currentStep >= 2 || isDoneAhead(2)"
           [class.active]="currentStep === 2"
-          [class.navigable]="currentStep > 2"
+          [class.navigable]="isNavigable(2)"
+          [class.disabled]="currentStep < 2 && !isDoneAhead(2)"
           (click)="navigateToStep(2)">
           <div class="step-dot">
-            @if (currentStep > 2) {
+            @if (currentStep > 2 || isDoneAhead(2)) {
               <lucide-icon name="check" [size]="12"></lucide-icon>
             } @else {
               <span class="step-number">2</span>
@@ -51,19 +56,30 @@ const STEP_ROUTES: Record<number, string> = {
           </div>
           <span class="step-label">Design System</span>
         </div>
-        <div class="step-connector" [class.disabled]="currentStep < 3"></div>
+
+        <div class="step-connector" [class.disabled]="currentStep < 3 && !isDoneAhead(3)"></div>
+
+        <!-- Step 3: Prototypes -->
         <div
           class="step"
-          [class.disabled]="currentStep < 3"
+          [class.completed]="currentStep >= 3 || isDoneAhead(3)"
           [class.active]="currentStep === 3"
-          [class.navigable]="currentStep > 3"
+          [class.navigable]="isNavigable(3)"
+          [class.disabled]="currentStep < 3 && !isDoneAhead(3)"
           (click)="navigateToStep(3)">
           <div class="step-dot">
-            <span class="step-number">3</span>
+            @if (currentStep > 3 || isDoneAhead(3)) {
+              <lucide-icon name="check" [size]="12"></lucide-icon>
+            } @else {
+              <span class="step-number">3</span>
+            }
           </div>
           <span class="step-label">Prototypes</span>
         </div>
+
         <div class="step-connector" [class.disabled]="currentStep < 4"></div>
+
+        <!-- Step 4: Acceptance -->
         <div class="step" [class.disabled]="currentStep < 4" [class.active]="currentStep === 4">
           <div class="step-dot">
             <span class="step-number">4</span>
@@ -224,16 +240,29 @@ const STEP_ROUTES: Record<number, string> = {
 })
 export class UxDesignStepperComponent {
   @Input() currentStep: number = 1;
+  /** Highest step number that has been completed and saved (may be > currentStep). */
+  @Input() maxUnlockedStep: number = 0;
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   get progressPercentage(): number {
-    return Math.round((this.currentStep / 4) * 100);
+    const effective = Math.max(this.currentStep, this.maxUnlockedStep);
+    return Math.round((effective / 4) * 100);
+  }
+
+  /** A future step that is beyond currentStep but already has saved data. */
+  isDoneAhead(step: number): boolean {
+    return step > this.currentStep && step <= this.maxUnlockedStep;
+  }
+
+  /** Any step (back or forward-unlocked) that can be clicked — never the current step. */
+  isNavigable(step: number): boolean {
+    return step !== this.currentStep && (step < this.currentStep || step <= this.maxUnlockedStep);
   }
 
   navigateToStep(step: number): void {
-    if (step >= this.currentStep) return;
+    if (!this.isNavigable(step)) return;
     const routePath = STEP_ROUTES[step];
     if (!routePath) return;
     this.router.navigate(['../', routePath], { relativeTo: this.route });
