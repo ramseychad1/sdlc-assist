@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 import { ProjectService } from '../../../../core/services/project.service';
 import { TemplateService } from '../../../../core/services/template.service';
 import { Project } from '../../../../core/models/project.model';
@@ -35,7 +35,7 @@ type ResultTab = 'overview' | 'preview';
   imports: [CommonModule, LucideAngularModule, MatSnackBarModule, UxDesignStepperComponent],
   template: `
     <div class="design-system-page">
-      <app-ux-design-stepper [currentStep]="2"></app-ux-design-stepper>
+      <app-ux-design-stepper [currentStep]="2" [maxUnlockedStep]="maxUnlockedStep()"></app-ux-design-stepper>
 
       <div class="header">
         <h2>Design System Generation</h2>
@@ -1396,6 +1396,7 @@ export class DesignSystemGenerationComponent implements OnInit {
 
   designSystemContent = signal<string | null>(null);
   saved = signal(false);
+  maxUnlockedStep = signal(2);
 
   private projectId!: string;
 
@@ -1451,8 +1452,12 @@ export class DesignSystemGenerationComponent implements OnInit {
   }
 
   private loadData(): void {
-    this.projectService.getById(this.projectId).subscribe({
-      next: (project) => {
+    forkJoin({
+      project: this.projectService.getById(this.projectId),
+      screens: this.projectService.getScreens(this.projectId).pipe(catchError(() => of([]))),
+    }).subscribe({
+      next: ({ project, screens }) => {
+        if (screens.length > 0) this.maxUnlockedStep.set(3);
         this.project.set(project);
 
         if (project.designSystemContent) {

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import { TemplateGalleryComponent } from '../template-gallery/template-gallery.component';
 import { UxDesignStepperComponent } from '../components/ux-design-stepper/ux-design-stepper.component';
 import { ProjectService } from '../../../../core/services/project.service';
@@ -61,9 +62,14 @@ export class UxDesignComponent implements OnInit {
     // route depth: template-selection -> ux-design -> projects/:id
     const projectId = this.route.parent?.parent?.snapshot.paramMap.get('id');
     if (!projectId) return;
-    this.projectService.getById(projectId).subscribe({
-      next: (project) => {
-        if (project.designSystemContent) {
+    forkJoin({
+      project: this.projectService.getById(projectId),
+      screens: this.projectService.getScreens(projectId).pipe(catchError(() => of([]))),
+    }).subscribe({
+      next: ({ project, screens }) => {
+        if (screens.length > 0) {
+          this.maxUnlockedStep.set(3);
+        } else if (project.designSystemContent) {
           this.maxUnlockedStep.set(2);
         }
       }

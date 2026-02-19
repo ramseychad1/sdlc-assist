@@ -32,8 +32,8 @@ export const routes: Routes = [
                 children: [
                     {
                         path: '',
-                        redirectTo: 'template-selection',
-                        pathMatch: 'full'
+                        pathMatch: 'full',
+                        loadComponent: () => import('./features/project/design-phase/ux-design/ux-design-redirect.component').then(m => m.UxDesignRedirectComponent)
                     },
                     {
                         path: 'template-selection',
