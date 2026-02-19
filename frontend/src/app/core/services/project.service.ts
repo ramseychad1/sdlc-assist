@@ -52,4 +52,8 @@ export class ProjectService {
     saveScreens(projectId: string, screens: ScreenDefinition[]): Observable<ScreenDefinition[]> {
         return this.http.post<ScreenDefinition[]>(`${this.baseUrl}/${projectId}/screens`, screens, { withCredentials: true });
     }
+
+    savePrototype(projectId: string, screenId: string, htmlContent: string): Observable<ScreenDefinition> {
+        return this.http.put<ScreenDefinition>(`${this.baseUrl}/${projectId}/screens/${screenId}/prototype`, { htmlContent }, { withCredentials: true });
+    }
 }

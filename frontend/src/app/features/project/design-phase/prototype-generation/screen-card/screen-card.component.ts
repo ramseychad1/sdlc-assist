@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ScreenDefinition, ScreenType } from '../../../../../core/models/screen-definition.model';
@@ -58,13 +58,27 @@ const COMPLEXITY_COLORS: Record<string, string> = {
           {{ screen.complexity }} complexity
         </span>
 
-        <div class="prototype-btn-wrap">
-          <button class="btn btn-sm btn-prototype" disabled>
-            <lucide-icon name="sparkles" [size]="12"></lucide-icon>
-            Generate Prototype
-          </button>
-          <span class="coming-soon-badge">Soon</span>
-        </div>
+        @if (pageState === 'confirmed') {
+          @if (screen.prototypeContent) {
+            <button class="btn btn-sm btn-view-proto" (click)="openPrototype.emit(screen)">
+              <lucide-icon name="eye" [size]="12"></lucide-icon>
+              View Prototype
+            </button>
+          } @else {
+            <button class="btn btn-sm btn-generate-proto" (click)="openPrototype.emit(screen)">
+              <lucide-icon name="sparkles" [size]="12"></lucide-icon>
+              Generate
+            </button>
+          }
+        } @else {
+          <div class="prototype-btn-wrap">
+            <button class="btn btn-sm btn-prototype" disabled>
+              <lucide-icon name="sparkles" [size]="12"></lucide-icon>
+              Generate
+            </button>
+            <span class="coming-soon-badge">Soon</span>
+          </div>
+        }
       </div>
     </div>
   `,
@@ -228,12 +242,53 @@ const COMPLEXITY_COLORS: Record<string, string> = {
       letter-spacing: 0.5px;
       border: 1px solid var(--border);
     }
+
+    .btn-generate-proto {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-generate-proto:hover {
+      opacity: 0.85;
+    }
+
+    .btn-view-proto {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 500;
+      background: color-mix(in srgb, var(--primary) 12%, transparent);
+      color: var(--primary);
+      border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-view-proto:hover {
+      background: color-mix(in srgb, var(--primary) 20%, transparent);
+    }
   `]
 })
 export class ScreenCardComponent {
   @Input() screen!: ScreenDefinition;
   @Input() pageState: string = 'review-screens';
   @Output() remove = new EventEmitter<string>();
+  @Output() openPrototype = new EventEmitter<ScreenDefinition>();
 
   getIcon(type: ScreenType): string {
     return SCREEN_TYPE_ICONS[type] ?? 'layout';
