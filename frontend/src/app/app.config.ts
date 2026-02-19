@@ -15,6 +15,7 @@ import {
   ScanSearch, CircleCheck, CircleCheckBig, LoaderCircle,
   Inbox, List, SquarePen, Settings, ChartBar, Wand, ArrowRight,
   ExternalLink, Maximize2,
+  PanelLeftClose, PanelLeftOpen,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -31,6 +32,7 @@ const icons = {
   ScanSearch, CircleCheck, CircleCheckBig, LoaderCircle,
   Inbox, List, SquarePen, Settings, ChartBar, Wand, ArrowRight,
   ExternalLink, Maximize2,
+  PanelLeftClose, PanelLeftOpen,
 };
 
 export const appConfig: ApplicationConfig = {
