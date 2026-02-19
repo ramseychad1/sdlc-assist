@@ -32,6 +32,10 @@ export class ProjectService {
         return this.http.put<Project>(`${this.baseUrl}/${id}/prd`, { content }, { withCredentials: true });
     }
 
+    saveDesignSystem(id: string, content: string): Observable<Project> {
+        return this.http.put<Project>(`${this.baseUrl}/${id}/design-system`, { content }, { withCredentials: true });
+    }
+
     selectTemplate(id: string, templateId: string): Observable<Project> {
         return this.http.put<Project>(`${this.baseUrl}/${id}/template`, { templateId }, { withCredentials: true });
     }

@@ -4,6 +4,7 @@ export interface Project {
     description: string | null;
     prdContent: string | null;
     selectedTemplateId: string | null;
+    designSystemContent: string | null;
     status: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
     ownerName: string | null;
     ownerId: string | null;

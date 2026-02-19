@@ -61,6 +61,13 @@ public class ProjectService {
     }
 
     @Transactional
+    public Project saveDesignSystem(UUID id, String content) {
+        Project project = findById(id);
+        project.setDesignSystemContent(content);
+        return projectRepository.save(project);
+    }
+
+    @Transactional
     public Project selectTemplate(UUID id, String templateId) {
         Project project = findById(id);
         project.setSelectedTemplateId(templateId);

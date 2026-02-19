@@ -55,6 +55,7 @@ app:
     project-id: ${VERTEXAI_PROJECT_ID:sdlc-assist}
     location: ${VERTEXAI_LOCATION:us-central1}
     agent-resource-id: ${VERTEXAI_AGENT_RESOURCE_ID:2165724545904803840}
+    design-system-agent-resource-id: ${VERTEXAI_DESIGN_SYSTEM_AGENT_RESOURCE_ID:4471708292606853120}
     service-account-json: ${GOOGLE_SERVICE_ACCOUNT_JSON:}
   anthropic:
     api-key: ${ANTHROPIC_API_KEY:}

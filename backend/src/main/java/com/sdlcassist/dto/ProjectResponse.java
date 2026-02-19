@@ -15,6 +15,7 @@ public class ProjectResponse {
     private String description;
     private String prdContent;
     private String selectedTemplateId;
+    private String designSystemContent;
     private String status;
     private String ownerName;
     private UUID ownerId;
@@ -28,6 +29,7 @@ public class ProjectResponse {
                 .description(project.getDescription())
                 .prdContent(project.getPrdContent())
                 .selectedTemplateId(project.getSelectedTemplateId())
+                .designSystemContent(project.getDesignSystemContent())
                 .status(project.getStatus().name())
                 .ownerName(project.getOwner() != null ? project.getOwner().getDisplayName() : null)
                 .ownerId(project.getOwner() != null ? project.getOwner().getId() : null)

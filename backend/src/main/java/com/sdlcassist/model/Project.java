@@ -33,6 +33,9 @@ public class Project {
     @Column(name = "selected_template_id", length = 100)
     private String selectedTemplateId;
 
+    @Column(name = "design_system_content", columnDefinition = "TEXT")
+    private String designSystemContent;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     @Builder.Default

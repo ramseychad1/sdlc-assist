@@ -42,6 +42,10 @@ export const routes: Routes = [
                     {
                         path: 'design-system',
                         loadComponent: () => import('./features/project/design-phase/design-system-generation/design-system-generation.component').then(m => m.DesignSystemGenerationComponent)
+                    },
+                    {
+                        path: 'prototypes',
+                        loadComponent: () => import('./features/project/design-phase/prototype-generation/prototype-generation.component').then(m => m.PrototypeGenerationComponent)
                     }
                 ]
             },

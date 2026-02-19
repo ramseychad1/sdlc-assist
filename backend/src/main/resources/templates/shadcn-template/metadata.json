@@ -1,0 +1,71 @@
+{
+  "id": "shadcn-template",
+  "name": "Basic Design System",
+  "tag": "Clean Enterprise",
+  "description": "Neutral shadcn-inspired design with left sidebar navigation, data tables, cards, and a restrained monochrome palette. Professional and information-dense.",
+  "source": "Basic_Design_System.pen",
+  "designTokens": {
+    "background":           "#fafafa",
+    "foreground":           "#0a0a0a",
+    "card":                 "#ffffff",
+    "primary":              "#171717",
+    "primaryForeground":    "#fafafa",
+    "secondary":            "#f5f5f5",
+    "secondaryForeground":  "#171717",
+    "muted":                "#f5f5f5",
+    "mutedForeground":      "#737373",
+    "accent":               "#f5f5f5",
+    "border":               "#e5e5e5",
+    "destructive":          "#e7000b",
+    "sidebar":              "#fafafa",
+    "sidebarBorder":        "#e4e4e7",
+    "sidebarAccent":        "#f4f4f4",
+    "sidebarPrimary":       "#18181b",
+    "borderRadius":         "6px",
+    "fontFamily":           "Geist, Inter, -apple-system, sans-serif",
+    "fontScale":            "compact"
+  },
+  "themes": {
+    "modes":   ["Light", "Dark"],
+    "bases":   ["Neutral", "Gray", "Stone", "Zinc", "Slate"],
+    "accents": ["Default", "Red", "Rose", "Orange", "Green", "Blue", "Yellow", "Violet"]
+  },
+  "components": [
+    "Sidebar", "Button", "Avatar", "Badge", "Accordion", "Alert",
+    "Textarea", "Select", "Input", "Tooltip", "Switch", "Radio",
+    "Progress", "Breadcrumb", "Card", "Tabs", "Dialog", "Dropdown",
+    "Checkbox", "Combobox", "Pagination", "DataTable", "Table",
+    "SidebarItem", "SidebarSection"
+  ],
+  "layoutPattern": "sidebar-left-fixed",
+  "componentStyle": "shadcn-ui",
+  "density": "comfortable",
+  "colorMood": "neutral-monochrome",
+  "dashboardExamples": [
+    "dashboard-utility",
+    "dashboard-revenue",
+    "dashboard-football"
+  ],
+  "keyPatterns": [
+    "Fixed 256px left sidebar with collapsible sections",
+    "Top header with breadcrumb trail and user menu",
+    "Card-based content areas with subtle borders",
+    "Data tables with sortable column headers",
+    "Phase progress indicator bar",
+    "Stat summary cards with delta indicators",
+    "Badge status indicators (success, warning, danger)",
+    "Two-column content layouts",
+    "Modal dialogs for create/edit actions",
+    "Inline PRD editor with toolbar actions"
+  ],
+  "avoidPatterns": [
+    "Bottom navigation bars",
+    "Full-width hero sections or banners",
+    "Dark backgrounds on main content area",
+    "Colorful or gradient backgrounds",
+    "Rounded pill-shaped cards",
+    "Floating action buttons",
+    "Heavy drop shadows"
+  ],
+  "promptHint": "Generate a design system following clean enterprise SaaS conventions in the style of shadcn/ui. Use a neutral monochrome base palette (background: #fafafa, primary: #171717, border: #e5e5e5) with Inter or Geist as the typeface. Apply a fixed 256px left sidebar for navigation with subtle border separation. Use 6px border-radius on all components. Cards have a white background with a 1px #e5e5e5 border — no drop shadows. Color appears only on interactive states and semantic indicators (green for success, red for destructive). Typography is compact: 13px body, 12px labels, 20px page titles. Keep information density high. The PRD editor, data tables, stat cards, phase progress bar, and section status table are the primary UI patterns for this application."
+}
