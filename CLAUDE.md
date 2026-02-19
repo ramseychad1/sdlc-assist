@@ -2,6 +2,46 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚡ NEXT SESSION HANDOFF (2026-02-19)
+
+### What was just completed
+- Gemini / Vertex AI Agent Engine integration (Planning & Analysis phase)
+  - Backend: `VertexAIService.java` — 2-step session API (create_session → streamQuery)
+  - Frontend: "Generate with Gemini" button, progress bar, source badges (Claude/Gemini), auto-edit mode, prominent Save bar
+  - Empty response guard added to frontend (shows snackbar instead of silently falling back to saved PRD)
+  - Raw body logging added to diagnose SSE parsing — streamQuery returns 200 but zero text chunks
+- Claude SSE stream reliability fix: `SseEmitter` `onTimeout`/`onError` handlers added to `FileController`
+- Supabase PgBouncer fix: `prepareThreshold: 0` in Hikari config
+- README.md created at repo root; CLAUDE.md updated
+
+### Gemini parsing — still broken, needs fix next session
+The `:streamQuery` endpoint returns **status 200 but empty body** (0 chars logged). No SSE events and no NDJSON lines are being read. Two possible causes:
+1. The response format from ADK 1.25 `stream_query` may require a different HTTP approach (e.g., chunked stream vs. buffered read via `readAllBytes()`)
+2. The agent may be timing out before responding (it took ~24s, which is suspicious)
+**Start here next session**: Check `VertexAIService.streamQuery()` — the `readAllBytes()` call may be consuming an empty body if the stream hasn't started yet, or the response might require streaming line-by-line rather than reading all bytes at once. Consider switching to `InputStream` line-by-line reading rather than `readAllBytes()`.
+
+### Next integration: `design_system_agent`
+- A second Vertex AI Agent Engine agent named `design_system_agent` is ready to integrate
+- Follow the same pattern as `VertexAIService.java` for the new agent
+- Will be used in the **Design phase** of the SDLC workflow
+- Check GCP for the resource ID: `curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" "https://us-central1-aiplatform.googleapis.com/v1beta1/projects/sdlc-assist/locations/us-central1/reasoningEngines"`
+- Ask the user for the resource ID and any agent-specific notes/SOP docs in `Notes/`
+
+### Vertex AI agents in GCP (as of 2026-02-19)
+| Resource ID | Display Name | Created | Notes |
+|---|---|---|---|
+| `2165724545904803840` | `prd_generation_agent` | 2026-02-18 15:24 UTC | **Active — used for PRD generation** |
+| `454356687504015360` | `prd_generation_agent` | 2026-02-18 13:57 UTC | Older duplicate — can be deleted |
+
+### Jira integration POC (not started)
+- Goal: create Jira Epics/Stories/Tasks directly from a saved PRD
+- Atlassian MCP tools are available in Claude Code (`mcp__claude_ai_Atlassian__*`)
+- Test project chosen: **"Test Project 2"** (id: `c8a4e709-d059-47af-ac7c-193f2200fe62`) — has full PRD with 10 EPICs
+- POC plan: user picks 1 EPIC, create it + all stories + tasks in Jira
+- Was interrupted before Jira project list was fetched — resume from `mcp__claude_ai_Atlassian__getAccessibleAtlassianResources`
+
+---
+
 ## IMPORTANT: Read Planning & Implementation Docs First
 
 Before starting any task, always read the following files to understand the full project context, requirements, and design intent:
