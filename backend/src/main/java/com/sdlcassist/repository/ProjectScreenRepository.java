@@ -13,6 +13,8 @@ public interface ProjectScreenRepository extends JpaRepository<ProjectScreen, UU
 
     List<ProjectScreen> findByProjectIdOrderByDisplayOrderAsc(UUID projectId);
 
+    long countByProjectIdAndPrototypeContentIsNotNull(UUID projectId);
+
     @Transactional
     void deleteByProjectId(UUID projectId);
 }

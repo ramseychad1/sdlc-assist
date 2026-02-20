@@ -35,7 +35,12 @@ type ResultTab = 'overview' | 'preview';
   imports: [CommonModule, LucideAngularModule, MatSnackBarModule, UxDesignStepperComponent],
   template: `
     <div class="design-system-page">
-      <app-ux-design-stepper [currentStep]="2" [maxUnlockedStep]="maxUnlockedStep()"></app-ux-design-stepper>
+      <app-ux-design-stepper
+        [currentStep]="2"
+        [maxUnlockedStep]="maxUnlockedStep()"
+        [step4Enabled]="false"
+        [uxDesignComplete]="project()?.uxDesignStatus === 'COMPLETE'">
+      </app-ux-design-stepper>
 
       <div class="header">
         <h2>Design System Generation</h2>

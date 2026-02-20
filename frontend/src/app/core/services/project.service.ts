@@ -69,6 +69,10 @@ export class ProjectService {
         return this.http.patch<ScreenDefinition>(`${this.baseUrl}/${projectId}/screens/${screenId}/prototype`, { htmlContent }, { withCredentials: true });
     }
 
+    completePhase(id: string, phase: string): Observable<Project> {
+        return this.http.post<Project>(`${this.baseUrl}/${id}/complete-phase`, { phase }, { withCredentials: true });
+    }
+
     refinePrototype(projectId: string, screenId: string, message: string): Observable<{ event: string; message?: string; refinedHtml?: string }> {
         return new Observable(observer => {
             fetch(`/api/projects/${projectId}/screens/${screenId}/refine`, {

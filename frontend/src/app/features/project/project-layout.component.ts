@@ -290,6 +290,7 @@ export class ProjectLayoutComponent implements OnInit {
 
     private updatePhases(project: Project): void {
         const hasPrd = !!project.prdContent && project.prdContent.trim().length > 0;
+        const techUnlocked = project.technicalDesignStatus != null && project.technicalDesignStatus !== 'LOCKED';
 
         this.phases.set([
             { label: 'Planning & Analysis', route: 'planning', enabled: true },
@@ -299,10 +300,17 @@ export class ProjectLayoutComponent implements OnInit {
                 enabled: hasPrd,
                 tooltip: hasPrd ? undefined : 'Complete Planning & Analysis first'
             },
-            { label: 'Technical Design', route: 'technical-design', enabled: false },
+            {
+                label: 'Technical Design',
+                route: 'technical-design',
+                enabled: techUnlocked,
+                tooltip: techUnlocked ? undefined : 'Complete UX Design first'
+            },
             { label: 'Implementation Plan', route: 'implementation', enabled: false },
             { label: 'Artifacts & Export', route: 'artifacts', enabled: false },
         ]);
+        // Re-sync active tab now that phases are populated (fixes race with ngOnInit call)
+        this.updateActivePhase();
     }
 
     private updateProgress(project: Project): void {
@@ -314,8 +322,8 @@ export class ProjectLayoutComponent implements OnInit {
             completedPhases++;
         }
 
-        // Phase 2: Design - complete when template is selected
-        if (project.selectedTemplateId) {
+        // Phase 2: UX Design - complete when uxDesignStatus is COMPLETE
+        if (project.uxDesignStatus === 'COMPLETE') {
             completedPhases++;
         }
 
@@ -360,9 +368,9 @@ export class ProjectLayoutComponent implements OnInit {
             return !!project.prdContent && project.prdContent.trim().length > 0;
         }
 
-        // UX Design is done when template is selected
+        // UX Design is done when uxDesignStatus is COMPLETE
         if (phase.route === 'ux-design') {
-            return !!project.selectedTemplateId;
+            return project.uxDesignStatus === 'COMPLETE';
         }
 
         // Other phases not yet implemented

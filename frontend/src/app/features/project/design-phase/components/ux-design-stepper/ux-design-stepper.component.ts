@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -77,16 +77,32 @@ const STEP_ROUTES: Record<number, string> = {
           <span class="step-label">Prototypes</span>
         </div>
 
-        <div class="step-connector" [class.disabled]="currentStep < 4"></div>
+        <div class="step-connector" [class.completed]="uxDesignComplete" [class.disabled]="!step4Enabled && !uxDesignComplete"></div>
 
-        <!-- Step 4: Acceptance -->
-        <div class="step" [class.disabled]="currentStep < 4" [class.active]="currentStep === 4">
+        <!-- Step 4: Complete (visual indicator only) -->
+        <div
+          class="step"
+          [class.completed]="uxDesignComplete"
+          [class.disabled]="!uxDesignComplete">
           <div class="step-dot">
-            <span class="step-number">4</span>
+            @if (uxDesignComplete) {
+              <lucide-icon name="check" [size]="12"></lucide-icon>
+            } @else {
+              <span class="step-number">4</span>
+            }
           </div>
-          <span class="step-label">Acceptance</span>
+          <span class="step-label">Complete</span>
         </div>
       </div>
+
+      @if (step4Enabled) {
+        <div class="continue-row">
+          <button class="continue-btn" (click)="onStep4Click()">
+            Continue to Technical Design
+            <lucide-icon name="arrow-right" [size]="12"></lucide-icon>
+          </button>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -221,6 +237,36 @@ const STEP_ROUTES: Record<number, string> = {
       line-height: 1;
     }
 
+    .continue-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .continue-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 16px;
+      height: 34px;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      font-family: var(--font-family);
+    }
+
+    .continue-btn:hover {
+      opacity: 0.88;
+    }
+
     @media (max-width: 768px) {
       .step-label {
         font-size: 10px;
@@ -242,13 +288,23 @@ export class UxDesignStepperComponent {
   @Input() currentStep: number = 1;
   /** Highest step number that has been completed and saved (may be > currentStep). */
   @Input() maxUnlockedStep: number = 0;
+  @Input() step4Enabled: boolean = false;
+  @Input() uxDesignComplete: boolean = false;
+  @Output() step4Click = new EventEmitter<void>();
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   get progressPercentage(): number {
+    if (this.uxDesignComplete) return 100;
     const effective = Math.max(this.currentStep, this.maxUnlockedStep);
     return Math.round((effective / 4) * 100);
+  }
+
+  onStep4Click(): void {
+    if (this.step4Enabled) {
+      this.step4Click.emit();
+    }
   }
 
   /** A future step that is beyond currentStep but already has saved data. */

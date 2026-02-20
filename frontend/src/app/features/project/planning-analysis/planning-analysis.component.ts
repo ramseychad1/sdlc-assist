@@ -1,7 +1,7 @@
 import { Component, computed, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { LucideAngularModule } from 'lucide-angular';
@@ -234,6 +234,22 @@ import { marked } from 'marked';
         </div>
       }
     </div>
+
+    <!-- Continue to UX Design action bar -->
+    @if (prdContent() && !aiResult()) {
+      <div class="continue-bar">
+        <div class="continue-bar-content">
+          <div class="continue-bar-info">
+            <lucide-icon name="circle-check" [size]="16" class="continue-bar-icon"></lucide-icon>
+            <span>PRD complete — ready to move to UX Design</span>
+          </div>
+          <button class="btn btn-primary" (click)="continueToUxDesign()">
+            Continue to UX Design
+            <lucide-icon name="arrow-right" [size]="16"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    }
 
     <!-- Saved PRD -->
     @if (prdContent() && !aiResult()) {
@@ -910,6 +926,34 @@ import { marked } from 'marked';
       flex-wrap: wrap;
       justify-content: center;
     }
+
+    .continue-bar {
+      background: color-mix(in srgb, var(--primary) 6%, var(--card));
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+      border-radius: var(--radius);
+      padding: 14px 20px;
+    }
+
+    .continue-bar-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .continue-bar-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    .continue-bar-icon {
+      color: var(--primary);
+      flex-shrink: 0;
+    }
   `,
     ],
 })
@@ -944,6 +988,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
 
     constructor(
         private route: ActivatedRoute,
+        private router: Router,
         private projectService: ProjectService,
         private fileService: FileService,
         private snackBar: MatSnackBar,
@@ -1320,6 +1365,10 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    continueToUxDesign(): void {
+        this.router.navigate(['/projects', this.projectId, 'ux-design']);
     }
 
     private autoScrollResult(): void {

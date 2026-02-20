@@ -30,7 +30,10 @@ interface ChatMessage {
     <div class="prototype-page">
       <app-ux-design-stepper
         [currentStep]="3"
-        [maxUnlockedStep]="screens().length > 0 && pageState() === 'confirmed' ? 4 : 3">
+        [maxUnlockedStep]="screens().length > 0 && pageState() === 'confirmed' ? 4 : 3"
+        [step4Enabled]="step4Enabled()"
+        [uxDesignComplete]="uxDesignComplete()"
+        (step4Click)="onCompleteUxDesign()">
       </app-ux-design-stepper>
 
       <div class="header">
@@ -221,6 +224,15 @@ interface ChatMessage {
                 </button>
               </div>
             </div>
+
+            @if (showWarning()) {
+              <div class="warning-banner">
+                <lucide-icon name="triangle-alert" [size]="16"></lucide-icon>
+                <span>{{ screens().length - generatedCount() }} of {{ screens().length }} screens have not been
+                  prototyped. Proceeding to Technical Design without full coverage may reduce accuracy of
+                  generated architecture and data models.</span>
+              </div>
+            }
 
             <div class="screen-grid">
               @for (screen of screens(); track screen.id) {
@@ -1332,6 +1344,30 @@ interface ChatMessage {
       background: var(--muted);
       color: var(--foreground);
     }
+
+    .warning-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: color-mix(in srgb, #d97706 8%, var(--card));
+      border: 1px solid color-mix(in srgb, #d97706 30%, var(--border));
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.5;
+    }
+
+    :host-context(.dark) .warning-banner {
+      color: #fbbf24;
+      background: color-mix(in srgb, #d97706 12%, var(--card));
+    }
+
+    .warning-banner lucide-icon {
+      color: #d97706;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
   `]
 })
 export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
@@ -1375,6 +1411,13 @@ export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
   private shouldScrollChat = false;
 
   savedProtoCount = computed(() => this.screens().filter(s => !!s.prototypeContent).length);
+  generatedCount = computed(() => this.screens().filter(s => !!s.prototypeContent).length);
+  step4Enabled = computed(() => this.generatedCount() >= 1);
+  showWarning = computed(() =>
+    this.screens().length > 0 && this.generatedCount() > 0 &&
+    this.generatedCount() < this.screens().length
+  );
+  uxDesignComplete = computed(() => this.project()?.uxDesignStatus === 'COMPLETE');
 
   protoSafeHtml = computed(() => {
     const html = this.protoHtml();
@@ -1732,6 +1775,24 @@ export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
     this.hasUnsavedRefinement.set(false);
     this.chatMessages.set([]);
     this.protoSaved.set(true);
+  }
+
+  onCompleteUxDesign(): void {
+    const id = this.project()?.id;
+    if (!id) return;
+
+    if (this.uxDesignComplete()) {
+      this.router.navigate(['/projects', id, 'technical-design']);
+      return;
+    }
+
+    this.projectService.completePhase(id, 'UX_DESIGN').subscribe({
+      next: () => {
+        this.projectService.notifyProjectChanged(id);
+        this.router.navigate(['/projects', id, 'technical-design']);
+      },
+      error: () => this.snackBar.open('Failed to complete UX Design phase', 'Dismiss', { duration: 4000 })
+    });
   }
 
   slugify(name: string): string {

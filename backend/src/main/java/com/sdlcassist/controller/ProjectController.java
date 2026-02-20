@@ -1,5 +1,6 @@
 package com.sdlcassist.controller;
 
+import com.sdlcassist.dto.CompletePhaseRequest;
 import com.sdlcassist.dto.PrdRequest;
 import com.sdlcassist.dto.ProjectRequest;
 import com.sdlcassist.dto.ProjectResponse;
@@ -67,6 +68,13 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> selectTemplate(@PathVariable UUID id,
             @Valid @RequestBody TemplateSelectionRequest request) {
         Project project = projectService.selectTemplate(id, request.getTemplateId());
+        return ResponseEntity.ok(ProjectResponse.from(project));
+    }
+
+    @PostMapping("/{id}/complete-phase")
+    public ResponseEntity<ProjectResponse> completePhase(
+            @PathVariable UUID id, @RequestBody CompletePhaseRequest request) {
+        Project project = projectService.completePhase(id, request.getPhase());
         return ResponseEntity.ok(ProjectResponse.from(project));
     }
 

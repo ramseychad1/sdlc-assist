@@ -6,6 +6,9 @@ export interface Project {
     selectedTemplateId: string | null;
     designSystemContent: string | null;
     status: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
+    uxDesignStatus: 'NOT_STARTED' | 'COMPLETE' | null;
+    technicalDesignStatus: 'LOCKED' | 'UNLOCKED' | 'IN_PROGRESS' | 'COMPLETE' | null;
+    uxDesignCompletedAt: string | null;
     ownerName: string | null;
     ownerId: string | null;
     createdAt: string;

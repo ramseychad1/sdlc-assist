@@ -4,11 +4,15 @@ import com.sdlcassist.dto.ProjectRequest;
 import com.sdlcassist.model.Project;
 import com.sdlcassist.model.User;
 import com.sdlcassist.repository.ProjectRepository;
+import com.sdlcassist.repository.ProjectScreenRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,6 +21,7 @@ import java.util.UUID;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectScreenRepository screenRepository;
 
     @Transactional(readOnly = true)
     public List<Project> findAll() {
@@ -71,6 +76,22 @@ public class ProjectService {
     public Project selectTemplate(UUID id, String templateId) {
         Project project = findById(id);
         project.setSelectedTemplateId(templateId);
+        return projectRepository.save(project);
+    }
+
+    @Transactional
+    public Project completePhase(UUID projectId, String phase) {
+        Project project = findById(projectId);
+        long generatedCount = screenRepository.countByProjectIdAndPrototypeContentIsNotNull(projectId);
+        if (generatedCount == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "At least one screen prototype must be generated before completing UX Design.");
+        }
+        if ("UX_DESIGN".equals(phase)) {
+            project.setUxDesignStatus("COMPLETE");
+            project.setUxDesignCompletedAt(Instant.now());
+            project.setTechnicalDesignStatus("UNLOCKED");
+        }
         return projectRepository.save(project);
     }
 

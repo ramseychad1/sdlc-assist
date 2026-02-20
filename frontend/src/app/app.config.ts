@@ -16,6 +16,7 @@ import {
   Inbox, List, SquarePen, Settings, ChartBar, Wand, ArrowRight,
   ExternalLink, Maximize2,
   PanelLeftClose, PanelLeftOpen,
+  TriangleAlert, Wrench, ArrowLeft,
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -33,6 +34,7 @@ const icons = {
   Inbox, List, SquarePen, Settings, ChartBar, Wand, ArrowRight,
   ExternalLink, Maximize2,
   PanelLeftClose, PanelLeftOpen,
+  TriangleAlert, Wrench, ArrowLeft,
 };
 
 export const appConfig: ApplicationConfig = {

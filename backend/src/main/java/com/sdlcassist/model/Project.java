@@ -36,6 +36,17 @@ public class Project {
     @Column(name = "design_system_content", columnDefinition = "TEXT")
     private String designSystemContent;
 
+    @Column(name = "ux_design_status", length = 20)
+    @Builder.Default
+    private String uxDesignStatus = "NOT_STARTED";
+
+    @Column(name = "technical_design_status", length = 20)
+    @Builder.Default
+    private String technicalDesignStatus = "LOCKED";
+
+    @Column(name = "ux_design_completed_at")
+    private Instant uxDesignCompletedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     @Builder.Default

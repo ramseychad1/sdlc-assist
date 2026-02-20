@@ -5,6 +5,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { TemplateGalleryComponent } from '../template-gallery/template-gallery.component';
 import { UxDesignStepperComponent } from '../components/ux-design-stepper/ux-design-stepper.component';
 import { ProjectService } from '../../../../core/services/project.service';
+import { Project } from '../../../../core/models/project.model';
 
 @Component({
   selector: 'app-ux-design',
@@ -12,7 +13,12 @@ import { ProjectService } from '../../../../core/services/project.service';
   imports: [CommonModule, TemplateGalleryComponent, UxDesignStepperComponent],
   template: `
     <div class="ux-design">
-      <app-ux-design-stepper [currentStep]="1" [maxUnlockedStep]="maxUnlockedStep()"></app-ux-design-stepper>
+      <app-ux-design-stepper
+        [currentStep]="1"
+        [maxUnlockedStep]="maxUnlockedStep()"
+        [step4Enabled]="false"
+        [uxDesignComplete]="project()?.uxDesignStatus === 'COMPLETE'">
+      </app-ux-design-stepper>
 
       <div class="phase-header">
         <h2>Design Template Selection</h2>
@@ -57,6 +63,7 @@ export class UxDesignComponent implements OnInit {
   private projectService = inject(ProjectService);
 
   maxUnlockedStep = signal(0);
+  project = signal<Project | null>(null);
 
   ngOnInit(): void {
     // route depth: template-selection -> ux-design -> projects/:id
@@ -67,6 +74,7 @@ export class UxDesignComponent implements OnInit {
       screens: this.projectService.getScreens(projectId).pipe(catchError(() => of([]))),
     }).subscribe({
       next: ({ project, screens }) => {
+        this.project.set(project);
         if (screens.length > 0) {
           this.maxUnlockedStep.set(3);
         } else if (project.designSystemContent) {
