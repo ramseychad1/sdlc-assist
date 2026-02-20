@@ -30,9 +30,8 @@ frontend/.cache/
 *.log
 
 # Notes
-Notes
-/Notes/*.*
+Notes/
 
-# Design Planning
-Design Phase Planning
-/2.Design-Phase/*.*
+# Planning & Design artifacts
+1.Planning/
+2.Design-Phase/
