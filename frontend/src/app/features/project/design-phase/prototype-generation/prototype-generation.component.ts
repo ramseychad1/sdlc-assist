@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -15,6 +15,12 @@ import { ScreenCardComponent } from './screen-card/screen-card.component';
 
 type PageState = 'review-inputs' | 'extracting' | 'review-screens' | 'confirmed';
 type ProtoState = 'generating' | 'preview';
+
+interface ChatMessage {
+  role: 'user' | 'agent';
+  content: string;
+  timestamp: Date;
+}
 
 @Component({
   selector: 'app-prototype-generation',
@@ -307,7 +313,9 @@ type ProtoState = 'generating' | 'preview';
                 }
 
                 <div class="proto-actions">
-                  @if (!protoSaved()) {
+                  @if (hasUnsavedRefinement()) {
+                    <!-- Save/Discard shown in chat section below -->
+                  } @else if (!protoSaved()) {
                     <button
                       class="btn btn-primary"
                       [disabled]="protoSaving()"
@@ -326,11 +334,77 @@ type ProtoState = 'generating' | 'preview';
                       Saved
                     </div>
                   }
-                  <button class="btn btn-secondary" (click)="regeneratePrototype()">
+                  <button class="btn btn-secondary" [disabled]="isRefining()" (click)="regeneratePrototype()">
                     <lucide-icon name="refresh-cw" [size]="13"></lucide-icon>
                     Regenerate
                   </button>
                 </div>
+
+                <!-- ── REFINE SECTION ── -->
+                <div class="refine-divider">
+                  <hr class="refine-hr">
+                  <span class="refine-label">REFINE</span>
+                </div>
+
+                <div class="chat-history" #chatHistory>
+                  @if (chatMessages().length === 0 && !isRefining()) {
+                    <div class="chat-empty">Send a message to start refining this prototype.</div>
+                  }
+                  @for (msg of chatMessages(); track $index) {
+                    <div class="chat-bubble" [class.chat-bubble-user]="msg.role === 'user'" [class.chat-bubble-agent]="msg.role === 'agent'">
+                      {{ msg.content }}
+                    </div>
+                  }
+                  @if (isRefining()) {
+                    <div class="chat-bubble chat-bubble-agent">
+                      <div class="thinking-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <div class="chat-input-wrap">
+                  <textarea
+                    class="chat-textarea"
+                    #refineTextarea
+                    placeholder="Describe a change to this prototype..."
+                    [value]="refineInput()"
+                    (input)="onRefineInput($event)"
+                    (keydown)="onRefineKeydown($event)"
+                    [disabled]="isRefining()">
+                  </textarea>
+                  <button
+                    class="chat-send-btn"
+                    [disabled]="!refineInput().trim() || isRefining()"
+                    (click)="sendRefinement()"
+                    title="Send (Ctrl+Enter)">
+                    <lucide-icon name="arrow-right" [size]="16"></lucide-icon>
+                  </button>
+                </div>
+
+                @if (hasUnsavedRefinement()) {
+                  <div class="refine-save-actions">
+                    <button
+                      class="btn btn-primary btn-sm"
+                      [disabled]="protoSaving()"
+                      (click)="saveRefinement()">
+                      @if (protoSaving()) {
+                        <lucide-icon name="loader-circle" [size]="13" class="spin"></lucide-icon>
+                        Saving...
+                      } @else {
+                        <lucide-icon name="save" [size]="13"></lucide-icon>
+                        Save Changes
+                      }
+                    </button>
+                    <button class="btn btn-ghost btn-sm" [disabled]="protoSaving()" (click)="discardRefinement()">
+                      <lucide-icon name="rotate-ccw" [size]="13"></lucide-icon>
+                      Discard Changes
+                    </button>
+                  </div>
+                }
               }
             </div>
 
@@ -378,6 +452,7 @@ type ProtoState = 'generating' | 'preview';
                   </div>
                   <iframe
                     class="proto-iframe"
+                    #protoIframe
                     sandbox="allow-same-origin"
                     [srcdoc]="protoSafeHtml()"
                     title="Prototype preview">
@@ -1093,9 +1168,173 @@ type ProtoState = 'generating' | 'preview';
       border: none;
       background: white;
     }
+
+    /* ─── REFINE SECTION ─── */
+    .refine-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0 12px;
+    }
+
+    .refine-hr {
+      flex: 1;
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    .refine-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 80px;
+      max-height: 220px;
+      margin-bottom: 10px;
+    }
+
+    .chat-empty {
+      font-size: 12px;
+      color: var(--muted-foreground);
+      font-style: italic;
+      text-align: center;
+      padding: 16px 8px;
+    }
+
+    .chat-bubble {
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      max-width: 92%;
+      word-break: break-word;
+    }
+
+    .chat-bubble-user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border-radius: 12px 12px 2px 12px;
+      margin-left: auto;
+    }
+
+    .chat-bubble-agent {
+      align-self: flex-start;
+      background: var(--muted);
+      color: var(--foreground);
+      border-radius: 12px 12px 12px 2px;
+    }
+
+    .thinking-dots {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 0;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted-foreground);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+
+    .chat-input-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .chat-textarea {
+      width: 100%;
+      min-height: 60px;
+      max-height: 120px;
+      padding: 10px 40px 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      overflow-y: auto;
+      box-sizing: border-box;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      line-height: 1.45;
+    }
+
+    .chat-textarea:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 25%, transparent);
+    }
+
+    .chat-textarea:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .chat-send-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s;
+    }
+
+    .chat-send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .refine-save-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--muted);
+      color: var(--foreground);
+    }
   `]
 })
-export class PrototypeGenerationComponent implements OnInit {
+export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private projectService = inject(ProjectService);
@@ -1122,6 +1361,18 @@ export class PrototypeGenerationComponent implements OnInit {
   protoProgressMsg = signal('Connecting to screen generation agent...');
   protoSaving = signal(false);
   protoSaved = signal(false);
+
+  // Refinement chat state
+  chatMessages = signal<ChatMessage[]>([]);
+  isRefining = signal(false);
+  hasUnsavedRefinement = signal(false);
+  savedProtoHtml = signal<string>('');
+  refineInput = signal<string>('');
+
+  @ViewChild('chatHistory') private chatHistoryRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('refineTextarea') private refineTextareaRef?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('protoIframe') private protoIframeRef?: ElementRef<HTMLIFrameElement>;
+  private shouldScrollChat = false;
 
   savedProtoCount = computed(() => this.screens().filter(s => !!s.prototypeContent).length);
 
@@ -1246,15 +1497,21 @@ export class PrototypeGenerationComponent implements OnInit {
   openPrototype(screen: ScreenDefinition): void {
     this.protoTarget.set(screen);
     this.protoSaved.set(false);
+    this.chatMessages.set([]);
+    this.isRefining.set(false);
+    this.hasUnsavedRefinement.set(false);
+    this.refineInput.set('');
 
     if (screen.prototypeContent) {
       // Already generated — go straight to preview
       this.protoHtml.set(screen.prototypeContent);
+      this.savedProtoHtml.set(screen.prototypeContent);
       this.protoDesignNotes.set('');
       this.protoState.set('preview');
       this.protoSaved.set(true);
     } else {
       // Start generation
+      this.savedProtoHtml.set('');
       this.protoState.set('generating');
       this.protoProgress.set(0);
       this.protoProgressMsg.set('Connecting to screen generation agent...');
@@ -1315,10 +1572,10 @@ export class PrototypeGenerationComponent implements OnInit {
     this.protoSaving.set(true);
     this.projectService.savePrototype(this.projectId, screen.id, html).subscribe({
       next: (updated) => {
-        // Update screen in local list
         this.screens.update(list =>
           list.map(s => s.id === updated.id ? { ...s, prototypeContent: updated.prototypeContent } : s)
         );
+        this.savedProtoHtml.set(html);
         this.protoSaving.set(false);
         this.protoSaved.set(true);
       },
@@ -1337,17 +1594,144 @@ export class PrototypeGenerationComponent implements OnInit {
     this.protoHtml.set('');
     this.protoDesignNotes.set('');
     this.protoSaved.set(false);
+    this.chatMessages.set([]);
+    this.hasUnsavedRefinement.set(false);
+    this.refineInput.set('');
     this.protoProgressMsg.set('Connecting to screen generation agent...');
     this.startGeneration(screen);
   }
 
   closePrototype(): void {
+    if (this.hasUnsavedRefinement()) {
+      const confirmed = window.confirm(
+        'You have unsaved refinements.\nClosing will discard your changes.\n\nDiscard and close?'
+      );
+      if (!confirmed) return;
+    }
     this.protoTarget.set(null);
     this.protoHtml.set('');
+    this.chatMessages.set([]);
+    this.hasUnsavedRefinement.set(false);
+    this.isRefining.set(false);
+    this.refineInput.set('');
   }
 
   onOverlayBackdropClick(event: MouseEvent): void {
     this.closePrototype();
+  }
+
+  // ── Refinement chat ──────────────────────────────────────────
+  ngAfterViewChecked(): void {
+    if (this.shouldScrollChat) {
+      this.scrollChatToBottom();
+      this.shouldScrollChat = false;
+    }
+  }
+
+  private scrollChatToBottom(): void {
+    const el = this.chatHistoryRef?.nativeElement;
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  private refreshIframe(html: string): void {
+    const iframe = this.protoIframeRef?.nativeElement;
+    if (iframe) iframe.srcdoc = html;
+  }
+
+  onRefineInput(event: Event): void {
+    const target = event.target as HTMLTextAreaElement;
+    this.refineInput.set(target.value);
+    // Auto-resize textarea
+    target.style.height = 'auto';
+    target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+  }
+
+  onRefineKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      this.sendRefinement();
+    }
+  }
+
+  sendRefinement(): void {
+    const message = this.refineInput().trim();
+    const screen = this.protoTarget();
+    if (!message || !screen || this.isRefining()) return;
+
+    // Add user message to chat
+    this.chatMessages.update(msgs => [...msgs, { role: 'user', content: message, timestamp: new Date() }]);
+    this.refineInput.set('');
+    const textarea = this.refineTextareaRef?.nativeElement;
+    if (textarea) textarea.style.height = 'auto';
+    this.isRefining.set(true);
+    this.shouldScrollChat = true;
+
+    this.projectService.refinePrototype(this.projectId, screen.id, message).subscribe({
+      next: (event) => {
+        if (event.event === 'COMPLETE' && event.refinedHtml) {
+          this.protoHtml.set(event.refinedHtml);
+          this.refreshIframe(event.refinedHtml);
+          this.hasUnsavedRefinement.set(true);
+          this.protoSaved.set(false);
+          this.chatMessages.update(msgs => [...msgs, {
+            role: 'agent',
+            content: 'Prototype updated. Review the changes on the right.',
+            timestamp: new Date()
+          }]);
+          this.isRefining.set(false);
+          this.shouldScrollChat = true;
+        } else if (event.event === 'ERROR') {
+          this.chatMessages.update(msgs => [...msgs, {
+            role: 'agent',
+            content: event.message || 'Refinement failed. Please try again.',
+            timestamp: new Date()
+          }]);
+          this.isRefining.set(false);
+          this.shouldScrollChat = true;
+        }
+      },
+      error: () => {
+        this.chatMessages.update(msgs => [...msgs, {
+          role: 'agent',
+          content: 'Connection error. Please try again.',
+          timestamp: new Date()
+        }]);
+        this.isRefining.set(false);
+        this.shouldScrollChat = true;
+      }
+    });
+  }
+
+  saveRefinement(): void {
+    const screen = this.protoTarget();
+    const html = this.protoHtml();
+    if (!screen || !html) return;
+
+    this.protoSaving.set(true);
+    this.projectService.saveRefinedPrototype(this.projectId, screen.id, html).subscribe({
+      next: (updated) => {
+        this.screens.update(list =>
+          list.map(s => s.id === updated.id ? { ...s, prototypeContent: updated.prototypeContent } : s)
+        );
+        this.savedProtoHtml.set(html);
+        this.protoSaving.set(false);
+        this.protoSaved.set(true);
+        this.hasUnsavedRefinement.set(false);
+      },
+      error: () => {
+        this.snackBar.open('Failed to save changes.', 'Dismiss', { duration: 4000 });
+        this.protoSaving.set(false);
+      }
+    });
+  }
+
+  discardRefinement(): void {
+    const html = this.savedProtoHtml();
+    this.protoHtml.set(html);
+    this.refreshIframe(html);
+    this.hasUnsavedRefinement.set(false);
+    this.chatMessages.set([]);
+    this.protoSaved.set(true);
   }
 
   slugify(name: string): string {

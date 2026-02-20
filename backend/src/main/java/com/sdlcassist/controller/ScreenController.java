@@ -1,5 +1,6 @@
 package com.sdlcassist.controller;
 
+import com.sdlcassist.dto.PrototypeRefineRequest;
 import com.sdlcassist.dto.PrototypeSaveRequest;
 import com.sdlcassist.dto.ScreenDefinitionDto;
 import com.sdlcassist.service.ScreenExtractionService;
@@ -109,5 +110,49 @@ public class ScreenController {
             @PathVariable UUID screenId,
             @RequestBody PrototypeSaveRequest request) {
         return ResponseEntity.ok(screenGenerationService.savePrototype(id, screenId, request.getHtmlContent()));
+    }
+
+    @PatchMapping("/{id}/screens/{screenId}/prototype")
+    public ResponseEntity<ScreenDefinitionDto> saveRefinedPrototype(
+            @PathVariable UUID id,
+            @PathVariable UUID screenId,
+            @RequestBody PrototypeSaveRequest request) {
+        // Accepts same body as PUT — prototypeContent or htmlContent
+        String content = request.getHtmlContent();
+        return ResponseEntity.ok(screenGenerationService.savePrototype(id, screenId, content));
+    }
+
+    @PostMapping(value = "/{id}/screens/{screenId}/refine", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter refinePrototype(
+            @PathVariable UUID id,
+            @PathVariable UUID screenId,
+            @RequestBody PrototypeRefineRequest request,
+            HttpServletResponse response) {
+
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+        SseEmitter emitter = new SseEmitter(300_000L);
+
+        emitter.onTimeout(() -> {
+            try {
+                emitter.send(SseEmitter.event().name("refine")
+                        .data("{\"event\":\"ERROR\",\"message\":\"Agent timed out after 5 minutes\"}"));
+            } catch (Exception ignored) {}
+            emitter.complete();
+        });
+
+        emitter.onError(ex -> {
+            try {
+                emitter.send(SseEmitter.event().name("refine")
+                        .data("{\"event\":\"ERROR\",\"message\":\"Stream error\"}"));
+            } catch (Exception ignored) {}
+            emitter.complete();
+        });
+
+        streamExecutor.execute(() ->
+                screenGenerationService.refinePrototype(id, screenId, request.getMessage(), emitter));
+
+        return emitter;
     }
 }

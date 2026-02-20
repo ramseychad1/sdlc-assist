@@ -76,6 +76,10 @@ public class ScreenGenerationService {
             String sessionId = createSession(accessToken, projectId.toString());
             log.info("Screen generation session created: {} for screen: {}", sessionId, screen.getName());
 
+            // Persist session ID so refinement can reuse it
+            screen.setVertexSessionId(sessionId);
+            screenRepository.save(screen);
+
             String userMessage = buildMessage(screen, project);
 
             sendProgress(emitter, "GENERATING", 50, "Generating HTML prototype...");
@@ -131,6 +135,152 @@ public class ScreenGenerationService {
         screen.setPrototypeContent(htmlContent);
         ProjectScreen saved = screenRepository.save(screen);
         return toDto(saved);
+    }
+
+    // -------------------------------------------------------------------------
+    // SSE stream — refine an existing prototype via chat message
+    // -------------------------------------------------------------------------
+    public void refinePrototype(UUID projectId, UUID screenId, String userMessage, SseEmitter emitter) {
+        try {
+            log.info("refinePrototype START — projectId={}, screenId={}, message={}", projectId, screenId,
+                    userMessage.substring(0, Math.min(80, userMessage.length())));
+            sendProgress(emitter, "THINKING", 0, "Connecting to agent...");
+
+            ProjectScreen screen = screenRepository.findById(screenId)
+                    .orElseThrow(() -> new RuntimeException("Screen not found: " + screenId));
+
+            if (!screen.getProjectId().equals(projectId)) {
+                sendError(emitter, "Screen does not belong to this project");
+                return;
+            }
+
+            if (screen.getPrototypeContent() == null || screen.getPrototypeContent().isBlank()) {
+                sendError(emitter, "No prototype found for this screen. Generate it first.");
+                return;
+            }
+
+            String accessToken = getAccessToken();
+            String sessionId = screen.getVertexSessionId();
+
+            // Build the refinement message with explicit instructions
+            String refinementMessage = userMessage.trim() +
+                    "\n\nReturn ONLY the complete updated HTML document. No explanation. No markdown code fences. " +
+                    "Start with <!DOCTYPE html> and end with </html>.";
+
+            // If no session exists, create one and replay context
+            if (sessionId == null || sessionId.isBlank()) {
+                log.info("No session ID for screen {}, creating new session for refinement", screenId);
+                sessionId = createSession(accessToken, projectId.toString());
+                screen.setVertexSessionId(sessionId);
+                screenRepository.save(screen);
+
+                // Replay context: send current prototype as initial context
+                String contextMessage = "Here is the current prototype HTML you previously generated:\n\n" +
+                        screen.getPrototypeContent() +
+                        "\n\nNow apply the following change: " + refinementMessage;
+                refinementMessage = contextMessage;
+            }
+
+            String agentResponse;
+            try {
+                agentResponse = streamQuery(accessToken, sessionId, projectId.toString(), refinementMessage);
+            } catch (Exception sessionException) {
+                log.warn("Session {} may have expired, creating new session for screen {}: {}",
+                        sessionId, screenId, sessionException.getMessage());
+
+                // Session expired — create new session with context replay
+                String newSessionId = createSession(accessToken, projectId.toString());
+                screen.setVertexSessionId(newSessionId);
+                screenRepository.save(screen);
+
+                String contextMessage = "Here is the current prototype HTML you previously generated:\n\n" +
+                        screen.getPrototypeContent() +
+                        "\n\nNow apply the following change: " + userMessage.trim() +
+                        "\n\nReturn ONLY the complete updated HTML document. No explanation. No markdown code fences. " +
+                        "Start with <!DOCTYPE html> and end with </html>.";
+
+                agentResponse = streamQuery(accessToken, newSessionId, projectId.toString(), contextMessage);
+            }
+
+            String refinedHtml = parseRefinementResponse(agentResponse);
+
+            if (refinedHtml == null || refinedHtml.isBlank()) {
+                sendError(emitter, "Agent returned empty response. Please try again.");
+                return;
+            }
+
+            String completePayload = objectMapper.writeValueAsString(Map.of(
+                    "event", "COMPLETE",
+                    "refinedHtml", refinedHtml
+            ));
+            emitter.send(SseEmitter.event().name("refine").data(completePayload));
+            emitter.complete();
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            try { sendError(emitter, "Refinement interrupted"); } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.error("Prototype refinement failed for screen {}", screenId, e);
+            try { sendError(emitter, "Refinement failed: " + e.getMessage()); } catch (Exception ignored) {}
+        } finally {
+            try { emitter.complete(); } catch (Exception ignored) {}
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Parse refinement response — agent returns raw HTML
+    // -------------------------------------------------------------------------
+    private String parseRefinementResponse(String response) {
+        if (response == null || response.isBlank()) return null;
+
+        String candidate = response.trim();
+
+        // Strip markdown code fences (```html ... ``` or ``` ... ```)
+        Pattern fencePattern = Pattern.compile("```(?:html)?\\s*([\\s\\S]*?)```", Pattern.DOTALL);
+        Matcher fenceMatcher = fencePattern.matcher(candidate);
+        if (fenceMatcher.find()) {
+            candidate = fenceMatcher.group(1).trim();
+        }
+
+        // Accept raw HTML
+        if (candidate.contains("<!DOCTYPE") || candidate.contains("<html")) {
+            return candidate;
+        }
+
+        // Agent may still return JSON wrapper {"htmlContent":"..."} — extract it
+        try {
+            JsonNode root = objectMapper.readTree(candidate);
+            String html = getJsonString(root, "htmlContent");
+            if (html != null && (html.contains("<!DOCTYPE") || html.contains("<html"))) {
+                log.info("Refinement: extracted htmlContent from JSON wrapper ({} chars)", html.length());
+                return html;
+            }
+        } catch (Exception e) {
+            // Not valid JSON — try finding JSON object boundary
+            int start = candidate.indexOf('{');
+            if (start >= 0) {
+                int depth = 0, end = -1;
+                for (int i = start; i < candidate.length(); i++) {
+                    char c = candidate.charAt(i);
+                    if (c == '{') depth++;
+                    else if (c == '}') { depth--; if (depth == 0) { end = i; break; } }
+                }
+                if (end > start) {
+                    try {
+                        JsonNode root = objectMapper.readTree(candidate.substring(start, end + 1));
+                        String html = getJsonString(root, "htmlContent");
+                        if (html != null && (html.contains("<!DOCTYPE") || html.contains("<html"))) {
+                            log.info("Refinement: extracted htmlContent from partial JSON ({} chars)", html.length());
+                            return html;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        log.error("Refinement: could not parse HTML from agent response. First 300 chars: {}",
+                response.substring(0, Math.min(300, response.length())));
+        return null;
     }
 
     // -------------------------------------------------------------------------

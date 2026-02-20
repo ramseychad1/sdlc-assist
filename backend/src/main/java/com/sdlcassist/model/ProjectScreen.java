@@ -48,6 +48,9 @@ public class ProjectScreen {
     @Column(name = "prototype_content", columnDefinition = "TEXT")
     private String prototypeContent;
 
+    @Column(name = "vertex_session_id")
+    private String vertexSessionId;
+
     @Column(name = "display_order")
     private Integer displayOrder;
 

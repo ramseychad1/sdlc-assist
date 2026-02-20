@@ -64,4 +64,45 @@ export class ProjectService {
     savePrototype(projectId: string, screenId: string, htmlContent: string): Observable<ScreenDefinition> {
         return this.http.put<ScreenDefinition>(`${this.baseUrl}/${projectId}/screens/${screenId}/prototype`, { htmlContent }, { withCredentials: true });
     }
+
+    saveRefinedPrototype(projectId: string, screenId: string, htmlContent: string): Observable<ScreenDefinition> {
+        return this.http.patch<ScreenDefinition>(`${this.baseUrl}/${projectId}/screens/${screenId}/prototype`, { htmlContent }, { withCredentials: true });
+    }
+
+    refinePrototype(projectId: string, screenId: string, message: string): Observable<{ event: string; message?: string; refinedHtml?: string }> {
+        return new Observable(observer => {
+            fetch(`/api/projects/${projectId}/screens/${screenId}/refine`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message }),
+                credentials: 'include',
+            }).then(async response => {
+                if (!response.ok) {
+                    observer.error(new Error(`HTTP ${response.status}`));
+                    return;
+                }
+                const reader = response.body!.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() ?? '';
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            try {
+                                // SSE spec allows 'data:value' or 'data: value'
+                                const raw = line.substring(5);
+                                const data = JSON.parse(raw.startsWith(' ') ? raw.substring(1) : raw);
+                                observer.next(data);
+                            } catch { /* skip malformed */ }
+                        }
+                    }
+                }
+                observer.complete();
+            }).catch(err => observer.error(err));
+        });
+    }
 }
