@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { Project, ProjectRequest } from '../models/project.model';
 import { ScreenDefinition } from '../models/screen-definition.model';
 import { environment } from '../../../environments/environment';
@@ -10,6 +10,14 @@ import { environment } from '../../../environments/environment';
 })
 export class ProjectService {
     private baseUrl = `${environment.apiUrl}/projects`;
+
+    /** Emits a project ID whenever that project's data changes (PRD saved, template selected, etc.) */
+    private projectChanged = new Subject<string>();
+    projectChanged$ = this.projectChanged.asObservable();
+
+    notifyProjectChanged(id: string): void {
+        this.projectChanged.next(id);
+    }
 
     constructor(private http: HttpClient) { }
 

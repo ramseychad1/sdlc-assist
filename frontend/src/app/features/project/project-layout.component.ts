@@ -251,6 +251,12 @@ export class ProjectLayoutComponent implements OnInit {
             }
         });
 
+        // Reload phases/progress when any child component saves project data
+        this.projectService.projectChanged$.pipe(
+            filter(id => id === this.project()?.id),
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe(id => this.loadProject(id));
+
         this.projectService.getAll().subscribe({
             next: (projects) => this.projects.set(projects),
         });

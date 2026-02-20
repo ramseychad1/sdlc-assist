@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -31,6 +31,12 @@ import { marked } from 'marked';
             <lucide-icon name="upload" [size]="16"></lucide-icon>
             Upload Document
           </button>
+          <button class="btn btn-outline"
+                  (click)="showManualEntry.set(!showManualEntry())"
+                  [class.active]="showManualEntry()">
+            <lucide-icon name="square-pen" [size]="16"></lucide-icon>
+            Enter Requirements Manually
+          </button>
           @if (analyzing()) {
             <button class="btn btn-destructive" (click)="stopAnalysis()">
               <lucide-icon name="square" [size]="16"></lucide-icon>
@@ -39,13 +45,13 @@ import { marked } from 'marked';
           } @else {
             <button class="btn btn-primary"
                     (click)="triggerAnalysis()"
-                    [disabled]="uploadedFiles().length === 0 || geminiAnalyzing()">
+                    [disabled]="!hasGenerationInput() || geminiAnalyzing()">
               <lucide-icon name="sparkles" [size]="16"></lucide-icon>
               Generate with Claude
             </button>
             <button class="btn btn-outline btn-gemini"
                     (click)="triggerGeminiAnalysis()"
-                    [disabled]="uploadedFiles().length === 0 || analyzing()">
+                    [disabled]="!hasGenerationInput() || analyzing()">
               @if (geminiAnalyzing()) {
                 <lucide-icon name="loader" [size]="16" class="spin"></lucide-icon>
                 Gemini Processing...
@@ -82,6 +88,37 @@ import { marked } from 'marked';
               </div>
             </div>
           }
+        </div>
+      }
+
+      <!-- Manual Requirements Entry -->
+      @if (showManualEntry()) {
+        <div class="manual-entry-panel">
+          <div class="manual-entry-header">
+            <span class="manual-entry-label">
+              <lucide-icon name="square-pen" [size]="14"></lucide-icon>
+              Manual Requirements
+            </span>
+            <button class="btn-icon" (click)="showManualEntry.set(false)" title="Close">
+              <lucide-icon name="x" [size]="14"></lucide-icon>
+            </button>
+          </div>
+          <textarea class="manual-textarea"
+                    [ngModel]="manualText()"
+                    (ngModelChange)="manualText.set($event)"
+                    placeholder="Tell me what you want to create!"></textarea>
+          <div class="manual-entry-footer">
+            <span class="manual-hint">
+              <lucide-icon name="sparkles" [size]="12"></lucide-icon>
+              You can save this as a document, or click Generate and we'll capture it automatically.
+            </span>
+            <button class="btn btn-outline btn-sm"
+                    (click)="saveManualAsDocument()"
+                    [disabled]="!manualText().trim() || savingManualDoc()">
+              <lucide-icon name="save" [size]="14"></lucide-icon>
+              @if (savingManualDoc()) { Saving... } @else { Save as Document }
+            </button>
+          </div>
         </div>
       }
 
@@ -254,15 +291,21 @@ import { marked } from 'marked';
     }
 
     <!-- Empty State -->
-    @if (!prdContent() && !aiResult() && uploadedFiles().length === 0 && !loading() && !uploading() && !analyzing()) {
+    @if (!prdContent() && !aiResult() && uploadedFiles().length === 0 && !showManualEntry() && !loading() && !uploading() && !analyzing()) {
       <div class="empty-state card">
         <lucide-icon name="file-plus" [size]="48" class="empty-icon"></lucide-icon>
         <h3>Get Started</h3>
-        <p>Upload planning documents and use AI to generate a Product Requirements Document for your project.</p>
-        <button class="btn btn-primary" (click)="fileInput.click()">
-          <lucide-icon name="upload" [size]="16"></lucide-icon>
-          Upload Documents
-        </button>
+        <p>Upload planning documents or type your requirements directly, then use AI to generate a Product Requirements Document.</p>
+        <div class="empty-actions">
+          <button class="btn btn-primary" (click)="fileInput.click()">
+            <lucide-icon name="upload" [size]="16"></lucide-icon>
+            Upload Documents
+          </button>
+          <button class="btn btn-outline" (click)="showManualEntry.set(true)">
+            <lucide-icon name="square-pen" [size]="16"></lucide-icon>
+            Enter Requirements Manually
+          </button>
+        </div>
       </div>
     }
 
@@ -788,6 +831,85 @@ import { marked } from 'marked';
       color: var(--muted-foreground);
       margin: 0;
     }
+
+    /* Manual requirements entry */
+    .manual-entry-panel {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .manual-entry-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .manual-entry-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .manual-textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 14px 16px;
+      border: none;
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 14px;
+      line-height: 1.6;
+      font-family: inherit;
+      resize: vertical;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .manual-textarea::placeholder {
+      color: var(--muted-foreground);
+      font-style: italic;
+    }
+
+    .manual-entry-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--muted);
+      border-top: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .manual-hint {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted-foreground);
+      flex: 1;
+    }
+
+    .btn.active {
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+      color: var(--primary);
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
   `,
     ],
 })
@@ -806,6 +928,11 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     geminiProgress = signal(0);
     geminiProgressMessage = signal('Initializing...');
     aiResultSource = signal<'claude' | 'gemini' | null>(null);
+    showManualEntry = signal(false);
+    manualText = signal('');
+    savingManualDoc = signal(false);
+
+    hasGenerationInput = computed(() => this.uploadedFiles().length > 0 || this.manualText().trim().length > 0);
 
     fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
     resultContent = viewChild<ElementRef<HTMLDivElement>>('resultContent');
@@ -839,7 +966,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     }
 
     hasUnsavedChanges(): boolean {
-        return !!this.aiResult() || this.editing();
+        return !!this.aiResult() || this.editing() || this.manualText().trim().length > 0;
     }
 
     private resetState(): void {
@@ -859,6 +986,9 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         this.geminiProgress.set(0);
         this.geminiProgressMessage.set('Initializing...');
         this.aiResultSource.set(null);
+        this.showManualEntry.set(false);
+        this.manualText.set('');
+        this.savingManualDoc.set(false);
     }
 
     private loadProject(): void {
@@ -879,6 +1009,45 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
         this.fileService.getByProject(this.projectId).subscribe({
             next: files => this.uploadedFiles.set(files),
             error: () => {},
+        });
+    }
+
+    saveManualAsDocument(): void {
+        const text = this.manualText().trim();
+        if (!text) return;
+        this.savingManualDoc.set(true);
+        const blob = new Blob([text], { type: 'text/plain' });
+        const file = new File([blob], 'manual-requirements.txt', { type: 'text/plain' });
+        this.fileService.upload(this.projectId, [file]).subscribe({
+            next: uploaded => {
+                this.uploadedFiles.set([...uploaded, ...this.uploadedFiles()]);
+                this.manualText.set('');
+                this.showManualEntry.set(false);
+                this.savingManualDoc.set(false);
+                this.snackBar.open('Requirements saved as document', 'Close', { duration: 2000 });
+            },
+            error: () => {
+                this.savingManualDoc.set(false);
+                this.snackBar.open('Failed to save requirements', 'Close', { duration: 3000 });
+            },
+        });
+    }
+
+    private ensureManualTextSaved(callback: () => void): void {
+        const text = this.manualText().trim();
+        if (!text) { callback(); return; }
+        const blob = new Blob([text], { type: 'text/plain' });
+        const file = new File([blob], 'manual-requirements.txt', { type: 'text/plain' });
+        this.fileService.upload(this.projectId, [file]).subscribe({
+            next: uploaded => {
+                this.uploadedFiles.set([...uploaded, ...this.uploadedFiles()]);
+                this.manualText.set('');
+                this.showManualEntry.set(false);
+                callback();
+            },
+            error: () => {
+                this.snackBar.open('Failed to save requirements before analysis', 'Close', { duration: 3000 });
+            },
         });
     }
 
@@ -917,6 +1086,10 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     }
 
     triggerAnalysis(): void {
+        this.ensureManualTextSaved(() => this.runClaudeAnalysis());
+    }
+
+    private runClaudeAnalysis(): void {
         this.streamSubscription?.unsubscribe();
         this.analyzing.set(true);
         this.aiResult.set(null);
@@ -960,6 +1133,10 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
     }
 
     triggerGeminiAnalysis(): void {
+        this.ensureManualTextSaved(() => this.runGeminiAnalysis());
+    }
+
+    private runGeminiAnalysis(): void {
         // Clear previous result and source first so the UI resets visibly
         this.aiResult.set(null);
         this.aiResultSource.set(null);
@@ -1028,6 +1205,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
                 this.aiResult.set(null);
                 this.editingAiResult.set(false);
                 this.savingPrd.set(false);
+                this.projectService.notifyProjectChanged(this.projectId);
                 this.snackBar.open('PRD saved successfully', 'Close', { duration: 3000 });
             },
             error: () => {
@@ -1069,6 +1247,7 @@ export class PlanningAnalysisComponent implements OnInit, HasUnsavedChanges {
                 this.editing.set(false);
                 this.prdDraft.set('');
                 this.savingPrd.set(false);
+                this.projectService.notifyProjectChanged(this.projectId);
                 this.snackBar.open('PRD updated successfully', 'Close', { duration: 3000 });
             },
             error: () => {
