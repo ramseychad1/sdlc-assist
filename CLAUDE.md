@@ -4,25 +4,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ⚡ NEXT SESSION HANDOFF (2026-02-20)
 
-### What was just completed — Phase 2.5.1: Prototype Refinement Chat
-- **Chat panel** in prototype modal left sidebar (REFINE section below Regenerate button)
-- `POST /api/projects/{id}/screens/{screenId}/refine` — SSE streaming POST using `fetch()` (not EventSource, which only supports GET)
-- `PATCH /api/projects/{id}/screens/{screenId}/prototype` — saves refined HTML content
-- `vertex_session_id` now persisted to `project_screens` immediately after initial generation session is created
-- Session replay: if `vertex_session_id` is null (existing screens generated before this feature), a new session is created and the current `prototype_content` HTML is sent as context
-- Angular zoneless fix: `@ViewChild('protoIframe')` + `refreshIframe()` method to directly set `iframe.srcdoc` — bypasses Angular's scheduler which doesn't fire inside `fetch` Promise callbacks
-- **Bug fixed**: Spring Boot SSE sends `data:{...}` (no space after colon). Frontend was checking `line.startsWith('data: ')` with a space — silently dropping all events. Fixed to `line.startsWith('data:')` with substring trimming.
+### What was just completed — Phase 2.5.2: Complete UX Design & Technical Design Unlock
+- **DB migration** (`006_project_ux_design_status.sql`): added `ux_design_status`, `technical_design_status`, `ux_design_completed_at` columns to `projects`
+- **Backend `POST /api/projects/{id}/complete-phase`**: validates ≥1 generated prototype, sets `ux_design_status='COMPLETE'`, `technical_design_status='UNLOCKED'`
+- **UX Design stepper Step 4 "Complete"**: pure visual indicator (✓ when done, greyed when not)
+- **"Continue to Technical Design" button**: right-aligned in stepper action row; appears when ≥1 prototype generated; calls API on first click then navigates, just navigates on revisit
+- **"Return to <previous step>" button**: left-aligned in stepper action row; step-aware labels: "Return to Planning & Analysis" (step 1), "Return to Template Selection" (step 2), "Return to Design System" (step 3)
+- **Warning banner**: amber inline banner on Prototypes step when some screens are unprototyped
+- **"Continue to UX Design" banner**: appears on Planning & Analysis page between AI section and PRD section when a PRD is saved
+- **Technical Design tab**: Coming Soon UI with wrench icon + "Back to UX Design" ghost button; unlocks when `technicalDesignStatus !== 'LOCKED'`
+- **Icons added**: `TriangleAlert`, `Wrench`, `ArrowLeft` registered in `app.config.ts`
 
-#### Key files changed (Phase 2.5.1)
+#### Key files changed (Phase 2.5.2)
 | File | Change |
 |---|---|
-| `supabase/migrations/005_add_screen_vertex_session_id.sql` | NEW — adds `vertex_session_id VARCHAR(255)` to `project_screens` |
-| `backend/.../model/ProjectScreen.java` | Added `vertexSessionId` field |
-| `backend/.../dto/PrototypeRefineRequest.java` | NEW — `{ message: string }` DTO |
-| `backend/.../service/ScreenGenerationService.java` | Saves session ID after creation; added `refinePrototype()` + `parseRefinementResponse()` |
-| `backend/.../controller/ScreenController.java` | Added `PATCH /{screenId}/prototype` + `POST /{screenId}/refine` |
-| `frontend/.../core/services/project.service.ts` | Added `saveRefinedPrototype()` + `refinePrototype()` with fixed `data:` SSE parsing |
-| `frontend/.../prototype-generation/prototype-generation.component.ts` | Full chat panel UI, signals, `refreshIframe()`, unsaved-changes guard |
+| `supabase/migrations/006_project_ux_design_status.sql` | NEW — 3 new columns on `projects` |
+| `backend/.../model/Project.java` | Added `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt` |
+| `backend/.../dto/ProjectResponse.java` | Exposed new fields in `from()` |
+| `backend/.../dto/CompletePhaseRequest.java` | NEW — `{ phase: String }` request DTO |
+| `backend/.../repository/ProjectScreenRepository.java` | Added `countByProjectIdAndPrototypeContentIsNotNull()` |
+| `backend/.../service/ProjectService.java` | Added `completePhase()` with validation |
+| `backend/.../controller/ProjectController.java` | Added `POST /{id}/complete-phase` |
+| `frontend/.../core/models/project.model.ts` | Added `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt` |
+| `frontend/.../core/services/project.service.ts` | Added `completePhase()` |
+| `frontend/.../project-layout.component.ts` | Tab unlock + progress driven from new fields; fixed `updateActivePhase()` race condition |
+| `frontend/.../ux-design-stepper.component.ts` | Step 4 visual state, continue + return buttons, `returnLabel`, `onReturnClick()` |
+| `frontend/.../prototype-generation.component.ts` | Computed signals, warning banner, `onCompleteUxDesign()` handler |
+| `frontend/.../technical-design.component.ts` | Coming Soon UI + back-navigation |
+| `frontend/.../planning-analysis.component.ts` | "Continue to UX Design" bar between AI section and PRD section |
+| `frontend/src/app/app.config.ts` | Added `TriangleAlert`, `Wrench`, `ArrowLeft` icons |
 
 ### Pending: Fix Gemini (prd_generation_agent) response parsing (BLOCKER)
 - `VertexAIService.streamQuery()` uses `readAllBytes()` — logs show **0 chars** despite status 200
@@ -78,25 +88,27 @@ Monorepo with three top-level components:
 - **`supabase/`** — SQL migrations for Supabase-hosted PostgreSQL.
 
 ### Backend Structure (`com.sdlcassist`)
-- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`, `PUT /api/projects/{id}/prd`), `FileController` (`/api/projects/{id}/files`, `/analyze/stream`, `/analyze/gemini`), `SectionController`, `ScreenController` (`/api/projects/{id}/screens`, `/screens/extract` SSE, `/screens/{screenId}/prototype`, `/screens/{screenId}/refine` SSE)
-- `service/` — Business logic: `UserService`, `ProjectService` (includes `savePrd()`), `SectionService`, `AiService` (Claude SSE streaming), `VertexAIService` (Gemini batch via Vertex AI Agent Engine), `DesignSystemService` (design system agent), `ScreenExtractionService` (screen list extraction), `ScreenGenerationService` (prototype generation + refinement chat), `FileService` (upload, extract text), `PromptService`
-- `model/` — JPA entities: `User` (roles: ADMIN, PRODUCT_MANAGER, VIEWER), `Project` (statuses: DRAFT, ACTIVE, COMPLETED, ARCHIVED; includes `prdContent`, `designSystemContent`), `RequirementSection`, `ProjectFile`, `ProjectScreen` (includes `prototypeContent`, `vertexSessionId`)
-- `dto/` — Request/response DTOs with Lombok builders (includes `PrdRequest`, `AiAnalysisResponse`, `ScreenDefinitionDto`, `PrototypeRefineRequest`)
+- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`, `PUT /api/projects/{id}/prd`, `POST /api/projects/{id}/complete-phase`), `FileController` (`/api/projects/{id}/files`, `/analyze/stream`, `/analyze/gemini`), `SectionController`, `ScreenController` (`/api/projects/{id}/screens`, `/screens/extract` SSE, `/screens/{screenId}/prototype`, `/screens/{screenId}/refine` SSE)
+- `service/` — Business logic: `UserService`, `ProjectService` (includes `savePrd()`, `completePhase()`), `SectionService`, `AiService` (Claude SSE streaming), `VertexAIService` (Gemini batch via Vertex AI Agent Engine), `DesignSystemService` (design system agent), `ScreenExtractionService` (screen list extraction), `ScreenGenerationService` (prototype generation + refinement chat), `FileService` (upload, extract text), `PromptService`
+- `model/` — JPA entities: `User` (roles: ADMIN, PRODUCT_MANAGER, VIEWER), `Project` (statuses: DRAFT, ACTIVE, COMPLETED, ARCHIVED; includes `prdContent`, `designSystemContent`, `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt`), `RequirementSection`, `ProjectFile`, `ProjectScreen` (includes `prototypeContent`, `vertexSessionId`)
+- `dto/` — Request/response DTOs with Lombok builders (includes `PrdRequest`, `AiAnalysisResponse`, `ScreenDefinitionDto`, `PrototypeRefineRequest`, `CompletePhaseRequest`)
 - `config/` — `SecurityConfig`, `CorsConfig`, `DataSeeder`
 
 ### Frontend Structure (`src/app/`)
-- `core/services/` — `AuthService`, `ProjectService` (includes `getScreens()`, `saveScreens()`, `savePrototype()`, `saveRefinedPrototype()`, `refinePrototype()` SSE), `SectionService`, `FileService` (upload, `analyzeStream()` SSE, `analyzeWithGemini()`)
-- `core/models/` — TypeScript interfaces matching backend DTOs (includes `ScreenDefinition`, `ScreenType`)
+- `core/services/` — `AuthService`, `ProjectService` (includes `getScreens()`, `saveScreens()`, `savePrototype()`, `saveRefinedPrototype()`, `refinePrototype()` SSE, `completePhase()`), `SectionService`, `FileService` (upload, `analyzeStream()` SSE, `analyzeWithGemini()`)
+- `core/models/` — TypeScript interfaces matching backend DTOs (includes `ScreenDefinition`, `ScreenType`; `Project` now has `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt`)
 - `core/guards/` — `authGuard`, `unsavedChangesGuard`
 - `features/login/` — Login page
 - `features/dashboard/` — Project list + create dialog
-- `features/project/` — Project layout with SDLC phase tabs; sub-phases: planning-analysis, ux-design (stepper: template → design-system → prototypes)
-- `features/project/design-phase/prototype-generation/` — Screen extraction, review, confirm, and per-screen prototype generation with refinement chat modal
+- `features/project/` — Project layout with SDLC phase tabs; Planning & Analysis has "Continue to UX Design" banner; Technical Design tab unlocks from DB field
+- `features/project/design-phase/prototype-generation/` — Screen extraction, review, confirm, and per-screen prototype generation with refinement chat modal; warning banner for partial coverage; `onCompleteUxDesign()` handler
+- `features/project/design-phase/components/ux-design-stepper/` — Step 4 visual indicator; right "Continue to Technical Design" + left "Return to <step>" action row
+- `features/project/design-phase/technical-design/` — Coming Soon UI stub (unlocked by `technicalDesignStatus`)
 - `shared/pipes/` — `MarkdownPipe` (renders PRD markdown via `marked`)
-- Routes: `/login`, `/dashboard`, `/projects/:id/planning`, `/projects/:id/ux-design/**`
+- Routes: `/login`, `/dashboard`, `/projects/:id/planning`, `/projects/:id/ux-design/**`, `/projects/:id/technical-design`
 
 ### Database
-Six tables: `users`, `projects`, `requirement_sections`, `project_files`, `templates`, `project_screens`. UUIDs as primary keys. The `projects` table has `prd_content` TEXT and `design_system_content` TEXT columns. The `project_screens` table has `prototype_content` TEXT and `vertex_session_id` VARCHAR(255) columns.
+Six tables: `users`, `projects`, `requirement_sections`, `project_files`, `templates`, `project_screens`. UUIDs as primary keys. The `projects` table has `prd_content` TEXT, `design_system_content` TEXT, `ux_design_status VARCHAR(20)` (default `'NOT_STARTED'`), `technical_design_status VARCHAR(20)` (default `'LOCKED'`), and `ux_design_completed_at TIMESTAMP` columns. The `project_screens` table has `prototype_content` TEXT and `vertex_session_id` VARCHAR(255) columns.
 
 ## Common Commands
 
@@ -192,6 +204,7 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - **Phase 2.4 — Screen Extraction**: `screen_extraction_agent` reads PRD and returns JSON list of UI screens. User reviews/removes, then confirms to persist to `project_screens` DB table.
 - **Phase 2.5 — Prototype Generation**: `screen_generation_agent` generates per-screen HTML prototypes. Modal with iframe preview. Session ID persisted to `project_screens.vertex_session_id`.
 - **Phase 2.5.1 — Prototype Refinement Chat**: Chat panel in prototype modal. POST SSE streaming via `fetch()`. Session replay for screens without session ID. `PATCH` endpoint to save refined HTML.
+- **Phase 2.5.2 — Complete UX Design & Technical Design Unlock**: Step 4 "Complete" visual indicator in UX stepper. "Continue to Technical Design" button (right) + "Return to <prev step>" button (left) in stepper action row. Warning banner for partial prototype coverage. "Continue to UX Design" bar on Planning & Analysis page. Technical Design tab Coming Soon stub. DB-driven tab unlock via `ux_design_status` / `technical_design_status` columns.
 - **Supabase PgBouncer fix**: Added `prepareThreshold: 0` to Hikari datasource properties
 - **SSE stream reliability**: `SseEmitter` now has `onTimeout` + `onError` handlers
 
