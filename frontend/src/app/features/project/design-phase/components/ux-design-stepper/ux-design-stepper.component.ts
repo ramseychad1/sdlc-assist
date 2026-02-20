@@ -95,14 +95,18 @@ const STEP_ROUTES: Record<number, string> = {
         </div>
       </div>
 
-      @if (step4Enabled) {
-        <div class="continue-row">
+      <div class="continue-row">
+        <button class="return-btn" (click)="onReturnClick()">
+          <lucide-icon name="arrow-left" [size]="12"></lucide-icon>
+          {{ returnLabel }}
+        </button>
+        @if (step4Enabled) {
           <button class="continue-btn" (click)="onStep4Click()">
             Continue to Technical Design
             <lucide-icon name="arrow-right" [size]="12"></lucide-icon>
           </button>
-        </div>
-      }
+        }
+      </div>
     </div>
   `,
   styles: [`
@@ -239,10 +243,35 @@ const STEP_ROUTES: Record<number, string> = {
 
     .continue-row {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
       margin-top: 14px;
       padding-top: 12px;
       border-top: 1px solid var(--border);
+    }
+
+    .return-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      height: 34px;
+      background: none;
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      font-family: var(--font-family);
+    }
+
+    .return-btn:hover {
+      color: var(--foreground);
+      border-color: var(--foreground);
+      background: var(--accent);
     }
 
     .continue-btn {
@@ -294,6 +323,23 @@ export class UxDesignStepperComponent {
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  get returnLabel(): string {
+    switch (this.currentStep) {
+      case 1: return 'Return to Planning & Analysis';
+      case 2: return 'Return to Template Selection';
+      case 3: return 'Return to Design System';
+      default: return 'Return';
+    }
+  }
+
+  onReturnClick(): void {
+    if (this.currentStep === 1) {
+      this.router.navigate(['../../planning'], { relativeTo: this.route });
+    } else {
+      this.navigateToStep(this.currentStep - 1);
+    }
+  }
 
   get progressPercentage(): number {
     if (this.uxDesignComplete) return 100;
