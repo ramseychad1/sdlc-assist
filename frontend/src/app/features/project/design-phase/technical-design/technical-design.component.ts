@@ -84,11 +84,14 @@ export class TechnicalDesignComponent implements OnInit {
     const proj = this.project();
     if (!proj || !proj.techPreferencesSavedAt) return [];
     const savedAt = new Date(proj.techPreferencesSavedAt).getTime();
+    const guidelinesAt = proj.corporateGuidelinesUploadedAt
+      ? new Date(proj.corporateGuidelinesUploadedAt).getTime() : 0;
+    const changeAt = Math.max(savedAt, guidelinesAt);
     const stale: number[] = [];
-    if (proj.archOverviewGeneratedAt && new Date(proj.archOverviewGeneratedAt).getTime() < savedAt) stale.push(2);
-    if (proj.dataModelGeneratedAt && new Date(proj.dataModelGeneratedAt).getTime() < savedAt) stale.push(3);
-    if (proj.apiContractGeneratedAt && new Date(proj.apiContractGeneratedAt).getTime() < savedAt) stale.push(4);
-    if (proj.sequenceDiagramsGeneratedAt && new Date(proj.sequenceDiagramsGeneratedAt).getTime() < savedAt) stale.push(5);
+    if (proj.archOverviewGeneratedAt && new Date(proj.archOverviewGeneratedAt).getTime() < changeAt) stale.push(2);
+    if (proj.dataModelGeneratedAt && new Date(proj.dataModelGeneratedAt).getTime() < changeAt) stale.push(3);
+    if (proj.apiContractGeneratedAt && new Date(proj.apiContractGeneratedAt).getTime() < changeAt) stale.push(4);
+    if (proj.sequenceDiagramsGeneratedAt && new Date(proj.sequenceDiagramsGeneratedAt).getTime() < changeAt) stale.push(5);
     return stale;
   });
 
@@ -146,8 +149,36 @@ export class TechnicalDesignComponent implements OnInit {
 
   private loadProject(projectId: string): void {
     this.projectService.getById(projectId).subscribe({
-      next: proj => this.project.set(proj),
+      next: proj => {
+        this.project.set(proj);
+        this.enforceStepAccess();
+      },
     });
+  }
+
+  private enforceStepAccess(): void {
+    const url = this.router.url;
+    for (const [route, step] of Object.entries(this.ROUTE_STEPS)) {
+      if (url.includes(`/technical-design/${route}`)) {
+        if (step > 1 && !this.completedSteps().includes(step - 1)) {
+          this.redirectToLastAccessible();
+        }
+        return;
+      }
+    }
+  }
+
+  private redirectToLastAccessible(): void {
+    const projectId = this.project()?.id;
+    if (!projectId) return;
+    const completed = this.completedSteps();
+    let targetStep = 1;
+    for (let s = 1; s <= 4; s++) {
+      if (completed.includes(s)) targetStep = s + 1;
+      else break;
+    }
+    const route = this.STEP_ROUTES[Math.min(targetStep, 5)];
+    this.router.navigate(['/projects', projectId, 'technical-design', route], { replaceUrl: true });
   }
 
   private syncStepFromUrl(): void {
@@ -164,6 +195,7 @@ export class TechnicalDesignComponent implements OnInit {
     const projectId = this.project()?.id;
     const routePath = this.STEP_ROUTES[step];
     if (!projectId || !routePath) return;
+    if (step > 1 && !this.completedSteps().includes(step - 1)) return;
     this.router.navigate(['/projects', projectId, 'technical-design', routePath]);
   }
 }

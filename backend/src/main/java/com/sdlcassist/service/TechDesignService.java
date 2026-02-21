@@ -40,7 +40,7 @@ public class TechDesignService {
             new ProgressEvent("GENERATING_OVERVIEW",    80, "Generating architecture overview document..."),
             new ProgressEvent("FINALIZING",             95, "Finalizing and validating output...")
         );
-        runMockFlow(projectId, "architecture", events, ARCH_OVERVIEW_CONTENT, emitter);
+        runMockFlow(projectId, "architecture", events, ARCH_OVERVIEW_CONTENT, "Architecture overview generated.", emitter);
     }
 
     // -------------------------------------------------------------------------
@@ -57,7 +57,7 @@ public class TechDesignService {
             new ProgressEvent("ADDING_INDEXES",      80, "Identifying indexes and performance considerations..."),
             new ProgressEvent("FINALIZING",          95, "Finalizing data model...")
         );
-        runMockFlow(projectId, "data-model", events, DATA_MODEL_CONTENT, emitter);
+        runMockFlow(projectId, "data-model", events, DATA_MODEL_CONTENT, "Data model generated.", emitter);
     }
 
     // -------------------------------------------------------------------------
@@ -74,7 +74,7 @@ public class TechDesignService {
             new ProgressEvent("DOCUMENTING",           80, "Generating endpoint documentation..."),
             new ProgressEvent("FINALIZING",            95, "Finalizing API contract...")
         );
-        runMockFlow(projectId, "api-contract", events, API_CONTRACT_CONTENT, emitter);
+        runMockFlow(projectId, "api-contract", events, API_CONTRACT_CONTENT, "API contract generated.", emitter);
     }
 
     // -------------------------------------------------------------------------
@@ -91,7 +91,7 @@ public class TechDesignService {
             new ProgressEvent("GENERATING_ERROR_FLOWS", 80, "Generating error handling flows..."),
             new ProgressEvent("FINALIZING",             95, "Finalizing sequence diagrams...")
         );
-        runMockFlow(projectId, "sequence-diagrams", events, SEQUENCE_DIAGRAMS_CONTENT, emitter);
+        runMockFlow(projectId, "sequence-diagrams", events, SEQUENCE_DIAGRAMS_CONTENT, "Sequence diagrams generated.", emitter);
     }
 
     // -------------------------------------------------------------------------
@@ -99,7 +99,8 @@ public class TechDesignService {
     // -------------------------------------------------------------------------
 
     private void runMockFlow(UUID projectId, String artifactType,
-                             List<ProgressEvent> events, String staticContent, SseEmitter emitter) {
+                             List<ProgressEvent> events, String staticContent,
+                             String completeMessage, SseEmitter emitter) {
         try {
             for (ProgressEvent event : events) {
                 sendProgress(emitter, event.key(), event.progress(), event.message());
@@ -111,7 +112,7 @@ public class TechDesignService {
             String completePayload = objectMapper.writeValueAsString(Map.of(
                 "event",    "COMPLETE",
                 "progress", 100,
-                "message",  "Generation complete.",
+                "message",  completeMessage,
                 "content",  staticContent
             ));
             emitter.send(SseEmitter.event().name("progress").data(completePayload));

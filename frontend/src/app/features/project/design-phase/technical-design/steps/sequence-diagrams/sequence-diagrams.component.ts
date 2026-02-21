@@ -47,7 +47,10 @@ const ARTIFACT_STEP_STYLES = `
   .artifact-content ::ng-deep li { margin-bottom: 4px; }
   .artifact-content ::ng-deep .mermaid { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; overflow-x: auto; margin-bottom: 16px; }
   .action-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
-  .action-bar-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted-foreground); }
+  .action-bar-left { display: flex; align-items: center; gap: 8px; }
+  .action-bar-info { display: flex; flex-direction: column; gap: 1px; }
+  .action-bar-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+  .action-bar-date { font-size: 11px; color: var(--muted-foreground); }
   .btn { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; height: 36px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted-foreground); transition: background 0.15s, color 0.15s; font-family: var(--font-family); white-space: nowrap; }
   .btn:hover { background: var(--muted); color: var(--foreground); }
   .btn.btn-sm { height: 30px; padding: 0 10px; font-size: 12px; }
@@ -143,7 +146,10 @@ const ARTIFACT_STEP_STYLES = `
         <div class="action-bar">
           <div class="action-bar-left">
             <lucide-icon name="check-circle" [size]="16"></lucide-icon>
-            <span>Sequence Diagrams generated</span>
+            <div class="action-bar-info">
+              <span class="action-bar-name">Sequence Diagrams</span>
+              <span class="action-bar-date">Generated · {{ project()?.sequenceDiagramsGeneratedAt | date:'MMM d, yyyy' }}</span>
+            </div>
           </div>
           @if (techDesignComplete()) {
             <button class="btn btn-success" disabled>

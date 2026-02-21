@@ -203,12 +203,14 @@ const ARTIFACT_STEP_STYLES = `
     border-radius: var(--radius);
   }
 
+  .action-bar-info { display: flex; flex-direction: column; gap: 1px; }
+  .action-bar-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+  .action-bar-date { font-size: 11px; color: var(--muted-foreground); }
+
   .action-bar-left {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
-    color: var(--muted-foreground);
   }
 
   /* Buttons */
@@ -322,7 +324,10 @@ const ARTIFACT_STEP_STYLES = `
         <div class="action-bar">
           <div class="action-bar-left">
             <lucide-icon name="check-circle" [size]="16"></lucide-icon>
-            <span>Architecture Overview generated</span>
+            <div class="action-bar-info">
+              <span class="action-bar-name">Architecture Overview</span>
+              <span class="action-bar-date">Generated · {{ project()?.archOverviewGeneratedAt | date:'MMM d, yyyy' }}</span>
+            </div>
           </div>
           <button class="btn btn-primary" (click)="continueToDataModel()">
             Generate Data Model

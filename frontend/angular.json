@@ -58,6 +58,9 @@
             ],
             "styles": [
               "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/mermaid/dist/mermaid.min.js"
             ]
           },
           "configurations": {
