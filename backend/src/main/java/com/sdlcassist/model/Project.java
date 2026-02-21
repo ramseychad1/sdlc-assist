@@ -3,7 +3,9 @@ package com.sdlcassist.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -49,6 +51,55 @@ public class Project {
 
     @Column(name = "design_system_updated_at")
     private Instant designSystemUpdatedAt;
+
+    // --- Technical Design Phase ---
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tech_preferences", columnDefinition = "jsonb")
+    private String techPreferences;
+
+    @Column(name = "tech_preferences_saved_at")
+    private Instant techPreferencesSavedAt;
+
+    @Column(name = "corporate_guidelines_content", columnDefinition = "TEXT")
+    private String corporateGuidelinesContent;
+
+    @Column(name = "corporate_guidelines_filename", length = 255)
+    private String corporateGuidelinesFilename;
+
+    @Column(name = "corporate_guidelines_uploaded_at")
+    private Instant corporateGuidelinesUploadedAt;
+
+    @Column(name = "arch_overview_content", columnDefinition = "TEXT")
+    private String archOverviewContent;
+
+    @Column(name = "arch_overview_generated_at")
+    private Instant archOverviewGeneratedAt;
+
+    @Column(name = "data_model_content", columnDefinition = "TEXT")
+    private String dataModelContent;
+
+    @Column(name = "data_model_generated_at")
+    private Instant dataModelGeneratedAt;
+
+    @Column(name = "api_contract_content", columnDefinition = "TEXT")
+    private String apiContractContent;
+
+    @Column(name = "api_contract_generated_at")
+    private Instant apiContractGeneratedAt;
+
+    @Column(name = "sequence_diagrams_content", columnDefinition = "TEXT")
+    private String sequenceDiagramsContent;
+
+    @Column(name = "sequence_diagrams_generated_at")
+    private Instant sequenceDiagramsGeneratedAt;
+
+    @Column(name = "tech_design_status", length = 20)
+    @Builder.Default
+    private String techDesignStatus = "NOT_STARTED";
+
+    @Column(name = "tech_design_completed_at")
+    private Instant techDesignCompletedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)

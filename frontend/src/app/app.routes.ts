@@ -51,7 +51,34 @@ export const routes: Routes = [
             },
             {
                 path: 'technical-design',
-                loadComponent: () => import('./features/project/design-phase/technical-design/technical-design.component').then(m => m.TechnicalDesignComponent)
+                loadComponent: () => import('./features/project/design-phase/technical-design/technical-design.component').then(m => m.TechnicalDesignComponent),
+                children: [
+                    {
+                        path: '',
+                        pathMatch: 'full',
+                        redirectTo: 'tech-preferences'
+                    },
+                    {
+                        path: 'tech-preferences',
+                        loadComponent: () => import('./features/project/design-phase/technical-design/steps/tech-preferences/tech-preferences.component').then(m => m.TechPreferencesComponent)
+                    },
+                    {
+                        path: 'architecture',
+                        loadComponent: () => import('./features/project/design-phase/technical-design/steps/architecture-overview/architecture-overview.component').then(m => m.ArchitectureOverviewComponent)
+                    },
+                    {
+                        path: 'data-model',
+                        loadComponent: () => import('./features/project/design-phase/technical-design/steps/data-model/data-model.component').then(m => m.DataModelComponent)
+                    },
+                    {
+                        path: 'api-contract',
+                        loadComponent: () => import('./features/project/design-phase/technical-design/steps/api-contract/api-contract.component').then(m => m.ApiContractComponent)
+                    },
+                    {
+                        path: 'sequence-diagrams',
+                        loadComponent: () => import('./features/project/design-phase/technical-design/steps/sequence-diagrams/sequence-diagrams.component').then(m => m.SequenceDiagramsComponent)
+                    }
+                ]
             },
             {
                 path: '',

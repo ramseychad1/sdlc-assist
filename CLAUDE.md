@@ -2,37 +2,42 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## ⚡ NEXT SESSION HANDOFF (2026-02-20)
+## ⚡ NEXT SESSION HANDOFF (2026-02-21)
 
-### What was just completed — Phase 2.5.2: Complete UX Design & Technical Design Unlock
-- **DB migration** (`006_project_ux_design_status.sql`): added `ux_design_status`, `technical_design_status`, `ux_design_completed_at` columns to `projects`
-- **Backend `POST /api/projects/{id}/complete-phase`**: validates ≥1 generated prototype, sets `ux_design_status='COMPLETE'`, `technical_design_status='UNLOCKED'`
-- **UX Design stepper Step 4 "Complete"**: pure visual indicator (✓ when done, greyed when not)
-- **"Continue to Technical Design" button**: right-aligned in stepper action row; appears when ≥1 prototype generated; calls API on first click then navigates, just navigates on revisit
-- **"Return to <previous step>" button**: left-aligned in stepper action row; step-aware labels: "Return to Planning & Analysis" (step 1), "Return to Template Selection" (step 2), "Return to Design System" (step 3)
-- **Warning banner**: amber inline banner on Prototypes step when some screens are unprototyped
-- **"Continue to UX Design" banner**: appears on Planning & Analysis page between AI section and PRD section when a PRD is saved
-- **Technical Design tab**: Coming Soon UI with wrench icon + "Back to UX Design" ghost button; unlocks when `technicalDesignStatus !== 'LOCKED'`
-- **Icons added**: `TriangleAlert`, `Wrench`, `ArrowLeft` registered in `app.config.ts`
+### What was just completed — Phase 3.1: Technical Design UX Shell & Workflow
+- **DB migration** (`007_tech_design_phase.sql`): 14 new columns on `projects` — tech preferences, corporate guidelines, 4 artifact content+timestamp columns, `tech_design_status`, `tech_design_completed_at`
+- **Backend**: `TechDesignService.java` (mock SSE for 4 artifact steps), `TechDesignController.java` (POST SSE + PATCH save + DELETE clear endpoints), extended `ProjectService.java` + `ProjectController.java` (tech preferences CRUD, corporate guidelines upload/delete/view), `TechPreferencesRequest.java`, `TechDesignArtifactRequest.java`
+- **Static file**: `backend/src/main/resources/static/guidelines/global-generic-guidelines.md`
+- **Frontend**: `ngx-markdown` + `mermaid` installed; `TechnicalDesignComponent` replaced Coming Soon with 5-step container + router-outlet; `TechDesignStepperComponent` (5-step stepper with stale ⚠ state); `GuidelinesDrawerComponent` (right-side drawer); `TechPreferencesComponent` (Step 1 form with dropdowns, corporate upload, global guidelines accordion); 4 artifact step components (Architecture, DataModel, ApiContract, SequenceDiagrams) with 3-state SSE flow; `TechDesignService` (fetch-based POST SSE); child routes wired
+- **Phase completion**: `POST /api/projects/{id}/complete-phase` with `{ phase: "TECHNICAL_DESIGN" }` validates all 4 artifacts, sets `tech_design_status='COMPLETE'` — unlocks Implementation Plan tab (Coming Soon)
 
-#### Key files changed (Phase 2.5.2)
+#### Key files changed (Phase 3.1)
 | File | Change |
 |---|---|
-| `supabase/migrations/006_project_ux_design_status.sql` | NEW — 3 new columns on `projects` |
-| `backend/.../model/Project.java` | Added `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt` |
-| `backend/.../dto/ProjectResponse.java` | Exposed new fields in `from()` |
-| `backend/.../dto/CompletePhaseRequest.java` | NEW — `{ phase: String }` request DTO |
-| `backend/.../repository/ProjectScreenRepository.java` | Added `countByProjectIdAndPrototypeContentIsNotNull()` |
-| `backend/.../service/ProjectService.java` | Added `completePhase()` with validation |
-| `backend/.../controller/ProjectController.java` | Added `POST /{id}/complete-phase` |
-| `frontend/.../core/models/project.model.ts` | Added `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt` |
-| `frontend/.../core/services/project.service.ts` | Added `completePhase()` |
-| `frontend/.../project-layout.component.ts` | Tab unlock + progress driven from new fields; fixed `updateActivePhase()` race condition |
-| `frontend/.../ux-design-stepper.component.ts` | Step 4 visual state, continue + return buttons, `returnLabel`, `onReturnClick()` |
-| `frontend/.../prototype-generation.component.ts` | Computed signals, warning banner, `onCompleteUxDesign()` handler |
-| `frontend/.../technical-design.component.ts` | Coming Soon UI + back-navigation |
-| `frontend/.../planning-analysis.component.ts` | "Continue to UX Design" bar between AI section and PRD section |
-| `frontend/src/app/app.config.ts` | Added `TriangleAlert`, `Wrench`, `ArrowLeft` icons |
+| `supabase/migrations/007_tech_design_phase.sql` | NEW — 14 new columns on `projects` |
+| `backend/.../model/Project.java` | Added tech design fields |
+| `backend/.../dto/ProjectResponse.java` | Exposed tech design fields in `from()` |
+| `backend/.../dto/TechPreferencesRequest.java` | NEW |
+| `backend/.../dto/TechDesignArtifactRequest.java` | NEW |
+| `backend/.../service/ProjectService.java` | Extended `completePhase()` + added tech design methods |
+| `backend/.../controller/ProjectController.java` | Added tech preferences + corporate guidelines endpoints |
+| `backend/.../service/TechDesignService.java` | NEW — mock SSE for 4 artifacts |
+| `backend/.../controller/TechDesignController.java` | NEW — SSE generate + PATCH save + DELETE clear |
+| `backend/.../resources/static/guidelines/global-generic-guidelines.md` | NEW |
+| `frontend/.../app.config.ts` | `provideMarkdown`, new icons (Database, Code2, GitBranch, BookOpen, Info, FileUp, RefreshCcw) |
+| `frontend/.../app.routes.ts` | technical-design child routes |
+| `frontend/.../core/models/project.model.ts` | `TechPreferences` interface + 14 new Project fields |
+| `frontend/.../core/services/project.service.ts` | Tech design methods added |
+| `frontend/.../project-layout.component.ts` | `isPhaseDone()` + progress for technical-design |
+| `frontend/.../technical-design/technical-design.component.ts` | Replaced Coming Soon — container with stepper + router-outlet |
+| `frontend/.../technical-design/components/tech-design-stepper/` | NEW |
+| `frontend/.../technical-design/components/guidelines-drawer/` | NEW |
+| `frontend/.../technical-design/steps/tech-preferences/` | NEW — Step 1 |
+| `frontend/.../technical-design/steps/architecture-overview/` | NEW — Step 2 |
+| `frontend/.../technical-design/steps/data-model/` | NEW — Step 3 |
+| `frontend/.../technical-design/steps/api-contract/` | NEW — Step 4 |
+| `frontend/.../technical-design/steps/sequence-diagrams/` | NEW — Step 5 |
+| `frontend/.../technical-design/services/tech-design.service.ts` | NEW — POST SSE streaming |
 
 ### Pending: Fix Gemini (prd_generation_agent) response parsing (BLOCKER)
 - `VertexAIService.streamQuery()` uses `readAllBytes()` — logs show **0 chars** despite status 200
@@ -45,6 +50,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - DB column `design_system_content` added and live
 - **Test**: Navigate to a project with PRD + template selected → ux-design/design-system → click "Start Design System"
 
+### Pending: Phase 3.1.x — Wire real Vertex AI agents for Technical Design
+- Architecture: wire `architecture_agent` to replace mock in `TechDesignService.generateArchitecture()`
+- Data Model: wire `data_model_agent`
+- API Contract: wire `api_contract_agent`
+- Sequence Diagrams: wire `sequence_diagrams_agent`
+- Each phase: replace `runMockFlow()` call with real agent; frontend zero-change (same SSE contract)
+
 ### Pending: Jira integration POC
 - Goal: create Jira Epics/Stories/Tasks directly from a saved PRD
 - Atlassian MCP tools are available in Claude Code (`mcp__claude_ai_Atlassian__*`)
@@ -52,7 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - POC plan: user picks 1 EPIC, create it + all stories + tasks in Jira
 - Start from `mcp__claude_ai_Atlassian__getAccessibleAtlassianResources`
 
-### Vertex AI agents in GCP (as of 2026-02-20)
+### Vertex AI agents in GCP (as of 2026-02-21)
 | Resource ID | Display Name | API Version | Notes |
 |---|---|---|---|
 | `2165724545904803840` | `prd_generation_agent` | v1beta1 | **Active — PRD generation** |
@@ -88,27 +100,32 @@ Monorepo with three top-level components:
 - **`supabase/`** — SQL migrations for Supabase-hosted PostgreSQL.
 
 ### Backend Structure (`com.sdlcassist`)
-- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`, `PUT /api/projects/{id}/prd`, `POST /api/projects/{id}/complete-phase`), `FileController` (`/api/projects/{id}/files`, `/analyze/stream`, `/analyze/gemini`), `SectionController`, `ScreenController` (`/api/projects/{id}/screens`, `/screens/extract` SSE, `/screens/{screenId}/prototype`, `/screens/{screenId}/refine` SSE)
-- `service/` — Business logic: `UserService`, `ProjectService` (includes `savePrd()`, `completePhase()`), `SectionService`, `AiService` (Claude SSE streaming), `VertexAIService` (Gemini batch via Vertex AI Agent Engine), `DesignSystemService` (design system agent), `ScreenExtractionService` (screen list extraction), `ScreenGenerationService` (prototype generation + refinement chat), `FileService` (upload, extract text), `PromptService`
-- `model/` — JPA entities: `User` (roles: ADMIN, PRODUCT_MANAGER, VIEWER), `Project` (statuses: DRAFT, ACTIVE, COMPLETED, ARCHIVED; includes `prdContent`, `designSystemContent`, `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt`), `RequirementSection`, `ProjectFile`, `ProjectScreen` (includes `prototypeContent`, `vertexSessionId`)
-- `dto/` — Request/response DTOs with Lombok builders (includes `PrdRequest`, `AiAnalysisResponse`, `ScreenDefinitionDto`, `PrototypeRefineRequest`, `CompletePhaseRequest`)
+- `controller/` — REST endpoints: `AuthController` (`/api/auth/**`), `ProjectController` (`/api/projects`, tech preferences, corporate guidelines), `FileController`, `SectionController`, `ScreenController`, `DesignSystemController`, `TechDesignController` (Phase 3.1 — artifact generate SSE + PATCH save + DELETE clear)
+- `service/` — Business logic: `UserService`, `ProjectService` (savePrd, completePhase for UX_DESIGN + TECHNICAL_DESIGN, saveTechPreferences, saveCorporateGuidelines, saveArtifact, clearArtifact), `AiService`, `VertexAIService`, `DesignSystemService`, `ScreenExtractionService`, `ScreenGenerationService`, `TechDesignService` (Phase 3.1 mock SSE), `FileService`, `PromptService`
+- `model/` — JPA entities: `User`, `Project` (includes all tech design columns: techPreferences JSONB, 4 artifact TEXT columns with timestamps, techDesignStatus, techDesignCompletedAt), `RequirementSection`, `ProjectFile`, `ProjectScreen`
+- `dto/` — Request/response DTOs: `PrdRequest`, `CompletePhaseRequest`, `TechPreferencesRequest`, `TechDesignArtifactRequest`, `AiAnalysisResponse`, `ScreenDefinitionDto`, `PrototypeRefineRequest`
 - `config/` — `SecurityConfig`, `CorsConfig`, `DataSeeder`
 
 ### Frontend Structure (`src/app/`)
-- `core/services/` — `AuthService`, `ProjectService` (includes `getScreens()`, `saveScreens()`, `savePrototype()`, `saveRefinedPrototype()`, `refinePrototype()` SSE, `completePhase()`), `SectionService`, `FileService` (upload, `analyzeStream()` SSE, `analyzeWithGemini()`)
-- `core/models/` — TypeScript interfaces matching backend DTOs (includes `ScreenDefinition`, `ScreenType`; `Project` now has `uxDesignStatus`, `technicalDesignStatus`, `uxDesignCompletedAt`)
+- `core/services/` — `AuthService`, `ProjectService` (getScreens, saveScreens, savePrototype, completePhase, saveTechPreferences, uploadCorporateGuidelines, deleteCorporateGuidelines, saveArtifact, clearArtifact), `SectionService`, `FileService`
+- `core/models/` — TypeScript interfaces: `Project` (all fields including tech design), `TechPreferences`, `ScreenDefinition`, `ScreenType`, `ProjectRequest`
 - `core/guards/` — `authGuard`, `unsavedChangesGuard`
-- `features/login/` — Login page
-- `features/dashboard/` — Project list + create dialog
-- `features/project/` — Project layout with SDLC phase tabs; Planning & Analysis has "Continue to UX Design" banner; Technical Design tab unlocks from DB field
-- `features/project/design-phase/prototype-generation/` — Screen extraction, review, confirm, and per-screen prototype generation with refinement chat modal; warning banner for partial coverage; `onCompleteUxDesign()` handler
-- `features/project/design-phase/components/ux-design-stepper/` — Step 4 visual indicator; right "Continue to Technical Design" + left "Return to <step>" action row
-- `features/project/design-phase/technical-design/` — Coming Soon UI stub (unlocked by `technicalDesignStatus`)
+- `features/project/design-phase/technical-design/` — 5-step Technical Design phase:
+  - `technical-design.component.ts` — container with stepper + router-outlet, manages project state + stale detection
+  - `components/tech-design-stepper/` — 5-step stepper with stale ⚠ icon state
+  - `components/guidelines-drawer/` — right-side drawer for viewing .md files
+  - `steps/tech-preferences/` — Step 1: 6-dropdown stack form + corporate guidelines upload + global guidelines accordion
+  - `steps/architecture-overview/` — Step 2: 3-state SSE flow
+  - `steps/data-model/` — Step 3: 3-state SSE flow
+  - `steps/api-contract/` — Step 4: 3-state SSE flow
+  - `steps/sequence-diagrams/` — Step 5: 3-state SSE flow + "Technical Design Complete" button
+  - `services/tech-design.service.ts` — fetch-based POST SSE for all 4 artifact endpoints
 - `shared/pipes/` — `MarkdownPipe` (renders PRD markdown via `marked`)
-- Routes: `/login`, `/dashboard`, `/projects/:id/planning`, `/projects/:id/ux-design/**`, `/projects/:id/technical-design`
+- Routes: `/login`, `/dashboard`, `/projects/:id/planning`, `/projects/:id/ux-design/**`, `/projects/:id/technical-design/**`
+- `ngx-markdown` + `mermaid` installed; `provideMarkdown({ loader: HttpClient })` in `app.config.ts`
 
 ### Database
-Six tables: `users`, `projects`, `requirement_sections`, `project_files`, `templates`, `project_screens`. UUIDs as primary keys. The `projects` table has `prd_content` TEXT, `design_system_content` TEXT, `ux_design_status VARCHAR(20)` (default `'NOT_STARTED'`), `technical_design_status VARCHAR(20)` (default `'LOCKED'`), and `ux_design_completed_at TIMESTAMP` columns. The `project_screens` table has `prototype_content` TEXT and `vertex_session_id` VARCHAR(255) columns.
+Six tables: `users`, `projects`, `requirement_sections`, `project_files`, `templates`, `project_screens`. UUIDs as primary keys. The `projects` table has: `prd_content`, `design_system_content`, `ux_design_status`, `technical_design_status`, `ux_design_completed_at`, plus Phase 3.1 additions: `tech_preferences JSONB`, `tech_preferences_saved_at`, `corporate_guidelines_content`, `corporate_guidelines_filename`, `corporate_guidelines_uploaded_at`, `arch_overview_content`, `arch_overview_generated_at`, `data_model_content`, `data_model_generated_at`, `api_contract_content`, `api_contract_generated_at`, `sequence_diagrams_content`, `sequence_diagrams_generated_at`, `tech_design_status VARCHAR(20)` (NOT_STARTED/IN_PROGRESS/COMPLETE), `tech_design_completed_at`. The `project_screens` table has `prototype_content` TEXT and `vertex_session_id` VARCHAR(255) columns.
 
 ## Common Commands
 
@@ -190,7 +207,7 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - `CorsConfig` reads `ALLOWED_ORIGINS` env var (comma-separated); `SecurityConfig` injects the bean (do NOT instantiate `CorsConfig` manually)
 - **Backend private networking hostname**: `sdlc-assist.railway.internal:8080`
 
-## Current Status (as of 2026-02-20)
+## Current Status (as of 2026-02-21)
 
 ### Completed
 - Phase 1 core: auth, project CRUD, requirement sections API + UI
@@ -205,6 +222,7 @@ Set these as Railway service env vars — do NOT put production credentials in c
 - **Phase 2.5 — Prototype Generation**: `screen_generation_agent` generates per-screen HTML prototypes. Modal with iframe preview. Session ID persisted to `project_screens.vertex_session_id`.
 - **Phase 2.5.1 — Prototype Refinement Chat**: Chat panel in prototype modal. POST SSE streaming via `fetch()`. Session replay for screens without session ID. `PATCH` endpoint to save refined HTML.
 - **Phase 2.5.2 — Complete UX Design & Technical Design Unlock**: Step 4 "Complete" visual indicator in UX stepper. "Continue to Technical Design" button (right) + "Return to <prev step>" button (left) in stepper action row. Warning banner for partial prototype coverage. "Continue to UX Design" bar on Planning & Analysis page. Technical Design tab Coming Soon stub. DB-driven tab unlock via `ux_design_status` / `technical_design_status` columns.
+- **Phase 3.1 — Technical Design UX Shell**: Full 5-step Technical Design flow with mock SSE. TechDesignStepper, GuidelinesDrawer, TechPreferences form (Step 1), ArchitectureOverview (Step 2), DataModel (Step 3), ApiContract (Step 4), SequenceDiagrams with Mermaid + "Technical Design Complete" (Step 5). Stale warning banner when preferences change after artifacts generated. ngx-markdown with mermaid rendering installed.
 - **Supabase PgBouncer fix**: Added `prepareThreshold: 0` to Hikari datasource properties
 - **SSE stream reliability**: `SseEmitter` now has `onTimeout` + `onError` handlers
 

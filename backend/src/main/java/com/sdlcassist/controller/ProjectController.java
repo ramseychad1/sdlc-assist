@@ -4,6 +4,7 @@ import com.sdlcassist.dto.CompletePhaseRequest;
 import com.sdlcassist.dto.PrdRequest;
 import com.sdlcassist.dto.ProjectRequest;
 import com.sdlcassist.dto.ProjectResponse;
+import com.sdlcassist.dto.TechPreferencesRequest;
 import com.sdlcassist.dto.TemplateSelectionRequest;
 import com.sdlcassist.model.Project;
 import com.sdlcassist.model.User;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -75,6 +77,38 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> completePhase(
             @PathVariable UUID id, @RequestBody CompletePhaseRequest request) {
         Project project = projectService.completePhase(id, request.getPhase());
+        return ResponseEntity.ok(ProjectResponse.from(project));
+    }
+
+    @PutMapping("/{id}/tech-preferences")
+    public ResponseEntity<ProjectResponse> saveTechPreferences(
+            @PathVariable UUID id,
+            @RequestBody TechPreferencesRequest request) {
+        Project project = projectService.saveTechPreferences(id, request);
+        return ResponseEntity.ok(ProjectResponse.from(project));
+    }
+
+    @GetMapping("/{id}/corporate-guidelines")
+    public ResponseEntity<java.util.Map<String, String>> getCorporateGuidelines(@PathVariable UUID id) {
+        Project project = projectService.findById(id);
+        String content = project.getCorporateGuidelinesContent();
+        if (content == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(java.util.Map.of("content", content));
+    }
+
+    @PostMapping("/{id}/corporate-guidelines")
+    public ResponseEntity<ProjectResponse> uploadCorporateGuidelines(
+            @PathVariable UUID id,
+            @RequestParam("file") MultipartFile file) {
+        Project project = projectService.saveCorporateGuidelines(id, file);
+        return ResponseEntity.ok(ProjectResponse.from(project));
+    }
+
+    @DeleteMapping("/{id}/corporate-guidelines")
+    public ResponseEntity<ProjectResponse> deleteCorporateGuidelines(@PathVariable UUID id) {
+        Project project = projectService.deleteCorporateGuidelines(id);
         return ResponseEntity.ok(ProjectResponse.from(project));
     }
 

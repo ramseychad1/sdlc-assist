@@ -1,3 +1,12 @@
+export interface TechPreferences {
+    frontend: string;
+    backend: string;
+    database: string;
+    deployment: string;
+    auth: string;
+    apiStyle: string;
+}
+
 export interface Project {
     id: string;
     name: string;
@@ -10,6 +19,21 @@ export interface Project {
     technicalDesignStatus: 'LOCKED' | 'UNLOCKED' | 'IN_PROGRESS' | 'COMPLETE' | null;
     uxDesignCompletedAt: string | null;
     designSystemUpdatedAt: string | null;
+    // Technical Design Phase
+    techPreferences: string | null;  // JSON string of TechPreferences
+    techPreferencesSavedAt: string | null;
+    corporateGuidelinesFilename: string | null;
+    corporateGuidelinesUploadedAt: string | null;
+    archOverviewContent: string | null;
+    archOverviewGeneratedAt: string | null;
+    dataModelContent: string | null;
+    dataModelGeneratedAt: string | null;
+    apiContractContent: string | null;
+    apiContractGeneratedAt: string | null;
+    sequenceDiagramsContent: string | null;
+    sequenceDiagramsGeneratedAt: string | null;
+    techDesignStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETE' | null;
+    techDesignCompletedAt: string | null;
     ownerName: string | null;
     ownerId: string | null;
     createdAt: string;

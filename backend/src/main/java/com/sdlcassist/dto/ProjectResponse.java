@@ -21,6 +21,23 @@ public class ProjectResponse {
     private String technicalDesignStatus;
     private Instant uxDesignCompletedAt;
     private Instant designSystemUpdatedAt;
+
+    // Technical Design Phase
+    private String techPreferences;
+    private Instant techPreferencesSavedAt;
+    private String corporateGuidelinesFilename;
+    private Instant corporateGuidelinesUploadedAt;
+    private String archOverviewContent;
+    private Instant archOverviewGeneratedAt;
+    private String dataModelContent;
+    private Instant dataModelGeneratedAt;
+    private String apiContractContent;
+    private Instant apiContractGeneratedAt;
+    private String sequenceDiagramsContent;
+    private Instant sequenceDiagramsGeneratedAt;
+    private String techDesignStatus;
+    private Instant techDesignCompletedAt;
+
     private String ownerName;
     private UUID ownerId;
     private Instant createdAt;
@@ -39,6 +56,20 @@ public class ProjectResponse {
                 .technicalDesignStatus(project.getTechnicalDesignStatus())
                 .uxDesignCompletedAt(project.getUxDesignCompletedAt())
                 .designSystemUpdatedAt(project.getDesignSystemUpdatedAt())
+                .techPreferences(project.getTechPreferences())
+                .techPreferencesSavedAt(project.getTechPreferencesSavedAt())
+                .corporateGuidelinesFilename(project.getCorporateGuidelinesFilename())
+                .corporateGuidelinesUploadedAt(project.getCorporateGuidelinesUploadedAt())
+                .archOverviewContent(project.getArchOverviewContent())
+                .archOverviewGeneratedAt(project.getArchOverviewGeneratedAt())
+                .dataModelContent(project.getDataModelContent())
+                .dataModelGeneratedAt(project.getDataModelGeneratedAt())
+                .apiContractContent(project.getApiContractContent())
+                .apiContractGeneratedAt(project.getApiContractGeneratedAt())
+                .sequenceDiagramsContent(project.getSequenceDiagramsContent())
+                .sequenceDiagramsGeneratedAt(project.getSequenceDiagramsGeneratedAt())
+                .techDesignStatus(project.getTechDesignStatus())
+                .techDesignCompletedAt(project.getTechDesignCompletedAt())
                 .ownerName(project.getOwner() != null ? project.getOwner().getDisplayName() : null)
                 .ownerId(project.getOwner() != null ? project.getOwner().getId() : null)
                 .createdAt(project.getCreatedAt())

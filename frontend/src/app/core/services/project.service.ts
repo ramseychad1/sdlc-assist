@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { Project, ProjectRequest } from '../models/project.model';
+import { Project, ProjectRequest, TechPreferences } from '../models/project.model';
 import { ScreenDefinition } from '../models/screen-definition.model';
 import { environment } from '../../../environments/environment';
 
@@ -73,6 +73,30 @@ export class ProjectService {
         return this.http.post<Project>(`${this.baseUrl}/${id}/complete-phase`, { phase }, { withCredentials: true });
     }
 
+    // --- Technical Design Phase ---
+
+    saveTechPreferences(id: string, prefs: TechPreferences): Observable<Project> {
+        return this.http.put<Project>(`${this.baseUrl}/${id}/tech-preferences`, prefs, { withCredentials: true });
+    }
+
+    uploadCorporateGuidelines(id: string, file: File): Observable<Project> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post<Project>(`${this.baseUrl}/${id}/corporate-guidelines`, formData, { withCredentials: true });
+    }
+
+    deleteCorporateGuidelines(id: string): Observable<Project> {
+        return this.http.delete<Project>(`${this.baseUrl}/${id}/corporate-guidelines`, { withCredentials: true });
+    }
+
+    saveArtifact(id: string, artifactType: string, content: string): Observable<Project> {
+        return this.http.patch<Project>(`${this.baseUrl}/${id}/tech-design/${artifactType}`, { content }, { withCredentials: true });
+    }
+
+    clearArtifact(id: string, artifactType: string): Observable<Project> {
+        return this.http.delete<Project>(`${this.baseUrl}/${id}/tech-design/${artifactType}`, { withCredentials: true });
+    }
+
     refinePrototype(projectId: string, screenId: string, message: string): Observable<{ event: string; message?: string; refinedHtml?: string }> {
         return new Observable(observer => {
             fetch(`/api/projects/${projectId}/screens/${screenId}/refine`, {
@@ -97,7 +121,6 @@ export class ProjectService {
                     for (const line of lines) {
                         if (line.startsWith('data:')) {
                             try {
-                                // SSE spec allows 'data:value' or 'data: value'
                                 const raw = line.substring(5);
                                 const data = JSON.parse(raw.startsWith(' ') ? raw.substring(1) : raw);
                                 observer.next(data);

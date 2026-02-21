@@ -327,6 +327,11 @@ export class ProjectLayoutComponent implements OnInit {
             completedPhases++;
         }
 
+        // Phase 3: Technical Design - complete when techDesignStatus is COMPLETE
+        if (project.techDesignStatus === 'COMPLETE') {
+            completedPhases++;
+        }
+
         // Calculate percentage (each phase is 20%)
         const percent = (completedPhases / totalPhases) * 100;
         this.progressPercent.set(Math.round(percent));
@@ -373,7 +378,11 @@ export class ProjectLayoutComponent implements OnInit {
             return project.uxDesignStatus === 'COMPLETE';
         }
 
-        // Other phases not yet implemented
+        // Technical Design is done when techDesignStatus is COMPLETE
+        if (phase.route === 'technical-design') {
+            return project.techDesignStatus === 'COMPLETE';
+        }
+
         return false;
     }
 }
