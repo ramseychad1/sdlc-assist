@@ -23,4 +23,5 @@ export interface ScreenDefinition {
   prototypeContent?: string;
   displayOrder?: number;
   createdAt?: string;
+  prototypeGeneratedAt?: string;
 }

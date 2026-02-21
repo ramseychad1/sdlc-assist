@@ -54,6 +54,9 @@ public class ProjectScreen {
     @Column(name = "display_order")
     private Integer displayOrder;
 
+    @Column(name = "prototype_generated_at")
+    private Instant prototypeGeneratedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

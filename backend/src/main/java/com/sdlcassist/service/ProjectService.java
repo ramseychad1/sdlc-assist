@@ -69,6 +69,7 @@ public class ProjectService {
     public Project saveDesignSystem(UUID id, String content) {
         Project project = findById(id);
         project.setDesignSystemContent(content);
+        project.setDesignSystemUpdatedAt(Instant.now());
         return projectRepository.save(project);
     }
 

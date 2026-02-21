@@ -9,6 +9,7 @@ export interface Project {
     uxDesignStatus: 'NOT_STARTED' | 'COMPLETE' | null;
     technicalDesignStatus: 'LOCKED' | 'UNLOCKED' | 'IN_PROGRESS' | 'COMPLETE' | null;
     uxDesignCompletedAt: string | null;
+    designSystemUpdatedAt: string | null;
     ownerName: string | null;
     ownerId: string | null;
     createdAt: string;

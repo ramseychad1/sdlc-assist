@@ -47,6 +47,9 @@ public class Project {
     @Column(name = "ux_design_completed_at")
     private Instant uxDesignCompletedAt;
 
+    @Column(name = "design_system_updated_at")
+    private Instant designSystemUpdatedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     @Builder.Default

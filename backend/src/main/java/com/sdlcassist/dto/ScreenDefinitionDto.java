@@ -25,4 +25,5 @@ public class ScreenDefinitionDto {
     private String prototypeContent;
     private Integer displayOrder;
     private Instant createdAt;
+    private Instant prototypeGeneratedAt;
 }

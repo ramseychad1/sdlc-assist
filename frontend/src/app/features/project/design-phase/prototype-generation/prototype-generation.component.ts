@@ -225,6 +225,16 @@ interface ChatMessage {
               </div>
             </div>
 
+            @if (designSystemStale()) {
+              <div class="warning-banner warning-banner-ds">
+                <lucide-icon name="triangle-alert" [size]="16"></lucide-icon>
+                <div class="warning-banner-content">
+                  <span class="warning-banner-title">Design System Updated</span>
+                  <span>Your Design System has been updated. Regenerate the individual screen prototypes to apply the new design system.</span>
+                </div>
+              </div>
+            }
+
             @if (showWarning()) {
               <div class="warning-banner">
                 <lucide-icon name="triangle-alert" [size]="16"></lucide-icon>
@@ -1368,6 +1378,22 @@ interface ChatMessage {
       flex-shrink: 0;
       margin-top: 1px;
     }
+
+    .warning-banner-ds {
+      background: color-mix(in srgb, #b45309 8%, var(--card));
+      border-color: color-mix(in srgb, #b45309 35%, var(--border));
+    }
+
+    .warning-banner-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .warning-banner-title {
+      font-weight: 600;
+      font-size: 13px;
+    }
   `]
 })
 export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
@@ -1418,6 +1444,18 @@ export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
     this.generatedCount() < this.screens().length
   );
   uxDesignComplete = computed(() => this.project()?.uxDesignStatus === 'COMPLETE');
+
+  designSystemStale = computed(() => {
+    const dsUpdated = this.project()?.designSystemUpdatedAt;
+    if (!dsUpdated) return false;
+    const dsTime = new Date(dsUpdated).getTime();
+    return this.screens().some(s => {
+      if (!s.prototypeContent) return false;
+      // No timestamp = generated before tracking was added; treat as stale
+      if (!s.prototypeGeneratedAt) return true;
+      return new Date(s.prototypeGeneratedAt).getTime() < dsTime;
+    });
+  });
 
   protoSafeHtml = computed(() => {
     const html = this.protoHtml();
@@ -1616,7 +1654,7 @@ export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
     this.projectService.savePrototype(this.projectId, screen.id, html).subscribe({
       next: (updated) => {
         this.screens.update(list =>
-          list.map(s => s.id === updated.id ? { ...s, prototypeContent: updated.prototypeContent } : s)
+          list.map(s => s.id === updated.id ? { ...s, prototypeContent: updated.prototypeContent, prototypeGeneratedAt: updated.prototypeGeneratedAt } : s)
         );
         this.savedProtoHtml.set(html);
         this.protoSaving.set(false);
@@ -1754,7 +1792,7 @@ export class PrototypeGenerationComponent implements OnInit, AfterViewChecked {
     this.projectService.saveRefinedPrototype(this.projectId, screen.id, html).subscribe({
       next: (updated) => {
         this.screens.update(list =>
-          list.map(s => s.id === updated.id ? { ...s, prototypeContent: updated.prototypeContent } : s)
+          list.map(s => s.id === updated.id ? { ...s, prototypeContent: updated.prototypeContent, prototypeGeneratedAt: updated.prototypeGeneratedAt } : s)
         );
         this.savedProtoHtml.set(html);
         this.protoSaving.set(false);

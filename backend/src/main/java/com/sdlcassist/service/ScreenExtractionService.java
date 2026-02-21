@@ -434,6 +434,7 @@ public class ScreenExtractionService {
                 .prototypeContent(screen.getPrototypeContent())
                 .displayOrder(screen.getDisplayOrder())
                 .createdAt(screen.getCreatedAt())
+                .prototypeGeneratedAt(screen.getPrototypeGeneratedAt())
                 .build();
     }
 

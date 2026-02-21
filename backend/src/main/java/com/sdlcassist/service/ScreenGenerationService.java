@@ -22,6 +22,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -133,6 +134,7 @@ public class ScreenGenerationService {
         }
 
         screen.setPrototypeContent(htmlContent);
+        screen.setPrototypeGeneratedAt(Instant.now());
         ProjectScreen saved = screenRepository.save(screen);
         return toDto(saved);
     }
@@ -589,6 +591,7 @@ public class ScreenGenerationService {
                 .prototypeContent(screen.getPrototypeContent())
                 .displayOrder(screen.getDisplayOrder())
                 .createdAt(screen.getCreatedAt())
+                .prototypeGeneratedAt(screen.getPrototypeGeneratedAt())
                 .build();
     }
 

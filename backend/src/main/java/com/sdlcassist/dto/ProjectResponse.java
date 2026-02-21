@@ -20,6 +20,7 @@ public class ProjectResponse {
     private String uxDesignStatus;
     private String technicalDesignStatus;
     private Instant uxDesignCompletedAt;
+    private Instant designSystemUpdatedAt;
     private String ownerName;
     private UUID ownerId;
     private Instant createdAt;
@@ -37,6 +38,7 @@ public class ProjectResponse {
                 .uxDesignStatus(project.getUxDesignStatus())
                 .technicalDesignStatus(project.getTechnicalDesignStatus())
                 .uxDesignCompletedAt(project.getUxDesignCompletedAt())
+                .designSystemUpdatedAt(project.getDesignSystemUpdatedAt())
                 .ownerName(project.getOwner() != null ? project.getOwner().getDisplayName() : null)
                 .ownerId(project.getOwner() != null ? project.getOwner().getId() : null)
                 .createdAt(project.getCreatedAt())

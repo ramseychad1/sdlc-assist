@@ -131,8 +131,12 @@ type ResultTab = 'overview' | 'preview';
                 <button class="btn-icon" title="Download" (click)="downloadContent()">
                   <lucide-icon name="download" [size]="16"></lucide-icon>
                 </button>
-                <button class="btn-icon" title="Regenerate" (click)="regenerate()">
+                <button class="btn-icon" title="Regenerate with same template" (click)="regenerate()">
                   <lucide-icon name="refresh-cw" [size]="16"></lucide-icon>
+                </button>
+                <button class="btn btn-ghost btn-sm" (click)="changeTemplate()">
+                  <lucide-icon name="layout-template" [size]="14"></lucide-icon>
+                  Change Template
                 </button>
               </div>
             </div>
@@ -219,6 +223,88 @@ type ResultTab = 'overview' | 'preview';
             <!-- LIVE PREVIEW TAB -->
             @if (resultTab() === 'preview') {
               <div class="preview-frame" [ngStyle]="previewVars()">
+
+                <!-- App Shell -->
+                <div class="preview-group">
+                  <div class="preview-group-label">Application Shell</div>
+                  <div class="preview-app-shell">
+
+                    <!-- Sidebar -->
+                    <div class="preview-sidebar">
+                      <div class="preview-sidebar-logo">
+                        <div class="preview-sidebar-logo-mark"></div>
+                        <span>AppName</span>
+                      </div>
+                      <nav class="preview-nav">
+                        <div class="preview-nav-item preview-nav-item-active">
+                          <span class="preview-nav-icon">⊞</span>
+                          Dashboard
+                        </div>
+                        <div class="preview-nav-item">
+                          <span class="preview-nav-icon">◫</span>
+                          Projects
+                        </div>
+                        <div class="preview-nav-item">
+                          <span class="preview-nav-icon">⊙</span>
+                          Analytics
+                        </div>
+                        <div class="preview-nav-item">
+                          <span class="preview-nav-icon">◈</span>
+                          Team
+                        </div>
+                        <div class="preview-nav-section-label">Settings</div>
+                        <div class="preview-nav-item">
+                          <span class="preview-nav-icon">⚙</span>
+                          Preferences
+                        </div>
+                      </nav>
+                      <div class="preview-sidebar-footer">
+                        <div class="preview-avatar preview-avatar-sm">CH</div>
+                        <div>
+                          <div class="preview-sidebar-user-name">Chad R.</div>
+                          <div class="preview-sidebar-user-role">Admin</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Main content area -->
+                    <div class="preview-shell-main">
+                      <div class="preview-shell-topbar">
+                        <span class="preview-shell-title">Dashboard</span>
+                        <button class="preview-btn preview-btn-primary preview-btn-sm">New Project</button>
+                      </div>
+                      <div class="preview-shell-body">
+                        <div class="preview-shell-stats">
+                          <div class="preview-stat-card">
+                            <div class="preview-stat-value">12</div>
+                            <div class="preview-stat-label">Projects</div>
+                          </div>
+                          <div class="preview-stat-card">
+                            <div class="preview-stat-value">48</div>
+                            <div class="preview-stat-label">Tasks</div>
+                          </div>
+                          <div class="preview-stat-card">
+                            <div class="preview-stat-value">83%</div>
+                            <div class="preview-stat-label">On Track</div>
+                          </div>
+                        </div>
+                        <div class="preview-card-demo">
+                          <div class="preview-card-header">
+                            <div class="preview-card-title">Recent Activity</div>
+                            <span class="preview-badge preview-badge-success">● Active</span>
+                          </div>
+                          <div class="preview-card-desc">Projects Alpha, Beta, and Gamma are on track for delivery.</div>
+                          <div class="preview-card-divider"></div>
+                          <div class="preview-card-footer">
+                            <button class="preview-btn preview-btn-primary preview-btn-sm">View All</button>
+                            <button class="preview-btn preview-btn-ghost preview-btn-sm">Dismiss</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
 
                 <!-- Buttons -->
                 <div class="preview-group">
@@ -618,6 +704,36 @@ type ResultTab = 'overview' | 'preview';
       color: var(--foreground);
     }
 
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 12px;
+      height: 32px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted-foreground);
+    }
+
+    .btn-ghost:hover {
+      background: var(--muted);
+      color: var(--foreground);
+    }
+
+    .btn-sm {
+      height: 30px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
     /* Result sections */
     .result-section {
       border-top: 1px solid var(--border);
@@ -961,6 +1077,155 @@ type ResultTab = 'overview' | 'preview';
       display: flex;
       align-items: center;
       flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* ── App Shell ──────────────────────────────────── */
+    .preview-app-shell {
+      display: flex;
+      height: 300px;
+      border: 1px solid var(--preview-border);
+      border-radius: var(--preview-radius);
+      overflow: hidden;
+      background: var(--preview-bg);
+    }
+
+    .preview-sidebar {
+      width: 176px;
+      flex-shrink: 0;
+      background: var(--preview-card);
+      border-right: 1px solid var(--preview-border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--preview-border);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--preview-fg);
+      flex-shrink: 0;
+    }
+
+    .preview-sidebar-logo-mark {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: var(--preview-primary);
+      flex-shrink: 0;
+    }
+
+    .preview-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px 8px 0;
+      overflow: hidden;
+    }
+
+    .preview-nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--preview-muted-fg);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 10px 6px 4px;
+    }
+
+    .preview-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: var(--preview-radius);
+      font-size: 12px;
+      color: var(--preview-muted-fg);
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    .preview-nav-item-active {
+      background: color-mix(in srgb, var(--preview-primary) 12%, transparent);
+      color: var(--preview-primary);
+      font-weight: 600;
+    }
+
+    .preview-nav-icon {
+      font-size: 13px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .preview-sidebar-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--preview-border);
+      flex-shrink: 0;
+    }
+
+    .preview-avatar-sm {
+      width: 28px !important;
+      height: 28px !important;
+      font-size: 10px !important;
+      margin-left: 0 !important;
+    }
+
+    .preview-sidebar-user-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--preview-fg);
+      line-height: 1.3;
+    }
+
+    .preview-sidebar-user-role {
+      font-size: 10px;
+      color: var(--preview-muted-fg);
+    }
+
+    .preview-shell-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--preview-bg);
+      min-width: 0;
+    }
+
+    .preview-shell-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--preview-border);
+      background: var(--preview-card);
+      flex-shrink: 0;
+    }
+
+    .preview-shell-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--preview-fg);
+    }
+
+    .preview-shell-body {
+      flex: 1;
+      overflow: hidden;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .preview-shell-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
 
@@ -1566,6 +1831,10 @@ export class DesignSystemGenerationComponent implements OnInit {
     this.saved.set(false);
     this.resultTab.set('overview');
     this.pageState.set('review');
+  }
+
+  changeTemplate(): void {
+    this.router.navigate(['/projects', this.projectId, 'ux-design', 'template-selection']);
   }
 
   navigateToPrototypes(): void {
